@@ -1,9 +1,9 @@
-# ───────── 원시자료 / 파생 개인수준 데이터 (절대 커밋 금지) ─────────
+# -------- Raw data / derived individual-level data (never commit) --------
 data/
 *.sas7bdat
 *.XPT
 *.xpt
-*_analytic.csv        # 개인 수준 분석 추출본 (NHANES/KNHANES 파생)
+*_analytic.csv        # individual-level analytic extracts (derived from NHANES/KNHANES)
 engine_*.csv
 epi_*.csv
 trend_*.csv
@@ -11,21 +11,21 @@ trend_*.csv
 *_config.json
 *_table*.csv
 
-# ───────── 파이썬 / R 환경 ─────────
+# -------- Python / R environments --------
 .venv/
 .Rlibs/
 __pycache__/
 *.pyc
 *.pyo
 
-# ───────── 대용량 / 생성 산출물 ─────────
+# -------- Large / generated artifacts --------
 *.pptx
 *.docx
 *.zip
 *.egp
 *.log
 
-# ───────── 에디터 / OS ─────────
+# -------- Editor / OS --------
 .DS_Store
 Thumbs.db
 .ipynb_checkpoints/

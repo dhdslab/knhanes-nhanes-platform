@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Evidence Factory 핵심 로직 v3 (KNHANES + NHANES)
-- 모든 변수를 exposure/outcome로 선택 가능 (연속형 결과=선형 β, 이분형=로지스틱 OR)
-- 흡연/음주 never vs past·current 그룹핑, 설계가중
-- exposure·outcome 고르면 보정변수 자동 산출
-통계는 전부 결정론(R survey). """
+"""Evidence Factory core logic v3 (KNHANES + NHANES)
+- Any variable can be chosen as exposure/outcome (continuous outcome = linear beta, binary = logistic OR)
+- Smoking/alcohol grouped as never vs past/current, survey-weighted
+- Covariates auto-selected once exposure and outcome are chosen
+All statistics are deterministic (R survey). """
 import pyreadstat, pandas as pd, numpy as np, glob, json, subprocess, os
 
-# ── 통합 변수 레지스트리 (type: c=연속, b=이분) ──────────────────
+# -- Unified variable registry (type: c=continuous, b=binary) --------
 VARS={
  "age":("Age, years","c"),"bmi":("Body mass index, kg/m2","c"),"wc":("Waist circumference, cm","c"),
  "sbp":("Systolic blood pressure, mmHg","c"),"dbp":("Diastolic blood pressure, mmHg","c"),
@@ -24,11 +24,11 @@ VARS={
 def lab(c): return VARS[c][0]
 def typ(c): return VARS[c][1]
 
-# 데이터셋별 가용 변수 (현재 보유 데이터 기준). exposure·outcome 공통 목록.
+# Available variables per dataset (based on data currently on hand). Shared exposure/outcome list.
 AVAIL={
  "KNHANES":[c for c in VARS if c not in ("ggt","cap")],
  "NHANES":[c for c in VARS if c not in ("hba1c","insulin","hdl","mets")]}
-STEATOSIS_METHOD={"KNHANES":"NAFLD-LFS > -0.640 (인덱스)","NHANES":"CAP ≥248 dB/m (elastography)"}
+STEATOSIS_METHOD={"KNHANES":"NAFLD-LFS > -0.640 (index)","NHANES":"CAP >=248 dB/m (elastography)"}
 DATASETS=["KNHANES","NHANES"]
 
 def rscript_cmd():
@@ -52,37 +52,37 @@ def r_env(workdir="."):
         env["R_LIBS_USER"]=os.path.abspath(os.path.join(workdir,".Rlibs"))
     return env
 
-# 파생 결과의 정의 구성요소 (순환성 방지 + trajectory)
+# Definitional components of derived outcomes (prevents circularity + trajectory)
 def determinants(dataset, outcome):
     base={"dm":["glucose","hba1c"],"htn":["sbp","dbp"],"mets":["wc","glucose","sbp","tg","hdl"],
           "dld":["tchol"]}
     if outcome=="steatosis": return ["cap"] if dataset=="NHANES" else ["insulin","ast","alt"]
     return [v for v in base.get(outcome,[]) if v in AVAIL.get(dataset,[])]
 
-# 체격/체성분 군집 (같은 군집끼리 상호보정=과보정 방지)
+# Anthropometry/body-composition cluster (mutual adjustment within a cluster = overadjustment)
 ADIPOSITY={"bmi","wc","fat_kg","lean_kg","asmm_kg","bodyfat_pct","asm_pct"}
 
-# exposure·outcome → 보정변수 자동 산출 (과보정 회피)
+# exposure/outcome -> auto covariate selection (avoids overadjustment)
 def auto_covariates(dataset, exposures, outcomes):
-    cov=["age","men"]                                   # 연령·성별 항상
-    for c in ["smoking","alcohol"]:                     # 생활습관 교란요인
+    cov=["age","men"]                                   # age and sex always
+    for c in ["smoking","alcohol"]:                     # lifestyle confounders
         if c in AVAIL[dataset]: cov.append(c)
-    # BMI는 노출이 체격/체성분이 아닐 때만 교란요인으로 추가(공선성·매개 회피)
+    # BMI added as a confounder only when the exposure is not anthropometry/body-composition (avoid collinearity/mediation)
     if "bmi" in AVAIL[dataset] and not any(e in ADIPOSITY for e in exposures):
         cov.append("bmi")
     excl=set(exposures)|set(outcomes)
-    for o in outcomes: excl|=set(determinants(dataset,o))   # 결과 정의성분 제외
-    if any(e in ADIPOSITY for e in exposures): excl|=ADIPOSITY  # 노출이 체격군집이면 군집 전체 제외
+    for o in outcomes: excl|=set(determinants(dataset,o))   # exclude outcome definitional components
+    if any(e in ADIPOSITY for e in exposures): excl|=ADIPOSITY  # if exposure is in the anthropometry cluster, exclude the whole cluster
     return [c for c in cov if c in AVAIL[dataset] and c not in excl]
 
 DEFAULT_DEFS={
- "dm":{"FPG ≥126 mg/dL":True,"HbA1c ≥6.5%":True,"약물치료":True,"의사진단":True},
- "htn":{"SBP ≥140 or DBP ≥90 mmHg":True,"항고혈압제":True},
+ "dm":{"FPG >=126 mg/dL":True,"HbA1c >=6.5%":True,"Medication":True,"Physician diagnosis":True},
+ "htn":{"SBP >=140 or DBP >=90 mmHg":True,"Antihypertensive medication":True},
  "mets":{"Harmonized NCEP ATP III (3 of 5)":True},
- "dld":{"TC ≥240 mg/dL":True,"HDL <40 mg/dL":True,"TG ≥200 mg/dL":True},
- "steatosis":{"NAFLD-LFS >-0.640":True,"HSI >36 (대안)":False},"pop":{"age_min":20}}
+ "dld":{"TC >=240 mg/dL":True,"HDL <40 mg/dL":True,"TG >=200 mg/dL":True},
+ "steatosis":{"NAFLD-LFS >-0.640":True,"HSI >36 (alternative)":False},"pop":{"age_min":20}}
 
-# ── 로더 ──────────────────────────────────────────────────────────
+# -- Loaders ---------------------------------------------------------
 def _find(dd,n):
     h=glob.glob(os.path.join(dd,"**",n),recursive=True); return h[0] if h else None
 def _actual_usecols(path, desired, enc):
@@ -109,7 +109,7 @@ def _read_sas(path, usecols=None):
             return df,meta
         except Exception as e:
             errors.append(f"{enc or 'default'}: {e}")
-    raise RuntimeError(f"SAS 파일을 읽지 못했습니다: {path}\n" + "\n".join(errors))
+    raise RuntimeError(f"Failed to read SAS file: {path}\n" + "\n".join(errors))
 def required_data_message(dataset, data_dir, cycles):
     if dataset=="KNHANES":
         req=[]
@@ -119,10 +119,10 @@ def required_data_message(dataset, data_dir, cycles):
         mods=["demo","bmx","biopro","glu","trigly","tchol","lux","bpx","smq","alq","dxx"]
         req=[f"{m}_{cyc}.sas7bdat" for cyc in cycles for m in mods]
     found=glob.glob(os.path.join(data_dir,"**","*.sas7bdat"),recursive=True) if os.path.isdir(data_dir) else []
-    sample=", ".join(os.path.basename(x) for x in found[:8]) if found else "없음"
-    return (f"{dataset} 원자료를 찾지 못했습니다. 현재 데이터 폴더: {data_dir}. "
-            f"필요한 파일 예: {', '.join(req[:6])}. "
-            f"현재 폴더에서 발견된 sas7bdat: {sample}")
+    sample=", ".join(os.path.basename(x) for x in found[:8]) if found else "none"
+    return (f"Could not find {dataset} raw data. Current data folder: {data_dir}. "
+            f"Required files (example): {', '.join(req[:6])}. "
+            f"sas7bdat found in the current folder: {sample}")
 def load_raw(dataset, data_dir, cycles):
     return _load_knhanes(data_dir,cycles) if dataset=="KNHANES" else _load_nhanes(data_dir,cycles)
 
@@ -165,7 +165,7 @@ def _load_nhanes(data_dir, cycles):
         raise FileNotFoundError(required_data_message("NHANES", data_dir, cycles))
     DF=pd.concat(frames,ignore_index=True); DF.attrs["dataset"]="NHANES"; DF.attrs["n_cycles"]=len(frames); return DF
 
-# ── 전처리 정의 → 표준 cid 컬럼 (흡연/음주 그룹핑 포함) ────────────
+# -- Preprocessing definitions -> standard cid columns (incl. smoking/alcohol grouping) --
 def apply_definitions(DF, defs):
     ds=DF.attrs.get("dataset"); nc=DF.attrs.get("n_cycles",1)
     return _derive_knhanes(DF,defs,nc) if ds=="KNHANES" else _derive_nhanes(DF,defs,nc)
@@ -178,27 +178,27 @@ def _derive_knhanes(DF, de, nc):
     limb=d[["DW_Llg_LN","DW_Rlg_LN","DW_Lrm_LN","DW_Rrm_LN"]].sum(axis=1)
     d["fat_kg"]=d.DW_WBT_FT/1000; d["lean_kg"]=d.DW_WBT_LN/1000; d["asmm_kg"]=limb/1000
     d["bodyfat_pct"]=d.DW_WBT_FT/d.DW_WBT_MS*100; d["asm_pct"]=limb/d.DW_WBT_MS*100
-    # 흡연: never(BS1_1==3) vs ever(BS1_1 in 1,2)
+    # Smoking: never(BS1_1==3) vs ever(BS1_1 in 1,2)
     d["smoking"]=np.where(d.BS1_1==3,0,np.where(d.BS1_1.isin([1,2]),1,np.nan))
-    # 음주: never(BD1==1) vs ever(BD1==2)
+    # Alcohol: never(BD1==1) vs ever(BD1==2)
     d["alcohol"]=np.where(d.BD1==1,0,np.where(d.BD1==2,1,np.nan))
     def col(n): return d[n] if n in d.columns else pd.Series(np.nan,index=d.index)
     de31=col("DE1_31"); de32=col("DE1_32")
     hpdr=col("HE_HPdr"); dmdr=col("HE_DMdr"); hpdg=col("HE_HPdg"); dmdg=col("HE_DMdg")
     male=d.sex==1; female=d.sex==2
-    # 고혈압: SBP>=140 or DBP>=90 or 항고혈압제 복용
+    # Hypertension: SBP>=140 or DBP>=90 or on antihypertensive medication
     htn=pd.Series(False,index=d.index)
-    if de["htn"].get("SBP ≥140 or DBP ≥90 mmHg"): htn|=(d.sbp>=140)|(d.dbp>=90)
-    if de["htn"].get("항고혈압제"): htn|=(hpdr==1)
+    if de["htn"].get("SBP >=140 or DBP >=90 mmHg"): htn|=(d.sbp>=140)|(d.dbp>=90)
+    if de["htn"].get("Antihypertensive medication"): htn|=(hpdr==1)
     d["htn"]=htn.astype(int)
-    # 당뇨: FPG>=126 or HbA1c>=6.5 or 약물 or 진단 (ADA/KNHANES 표준)
+    # Diabetes: FPG>=126 or HbA1c>=6.5 or medication or diagnosis (ADA/KNHANES standard)
     dm=pd.Series(False,index=d.index)
-    if de["dm"].get("FPG ≥126 mg/dL"): dm|=(d.glucose>=126)
-    if de["dm"].get("HbA1c ≥6.5%"): dm|=((d.hba1c>=6.5)&d.hba1c.notna())
-    if de["dm"].get("약물치료"): dm|=(dmdr==1)|(de31==1)|(de32==1)
-    if de["dm"].get("의사진단"): dm|=(dmdg==1)
+    if de["dm"].get("FPG >=126 mg/dL"): dm|=(d.glucose>=126)
+    if de["dm"].get("HbA1c >=6.5%"): dm|=((d.hba1c>=6.5)&d.hba1c.notna())
+    if de["dm"].get("Medication"): dm|=(dmdr==1)|(de31==1)|(de32==1)
+    if de["dm"].get("Physician diagnosis"): dm|=(dmdg==1)
     d["dm"]=dm.astype(int)
-    # 대사증후군: harmonized NCEP ATP III — 5개 중 3개 (복부비만 비필수)
+    # Metabolic syndrome: harmonized NCEP ATP III -- 3 of 5 (abdominal obesity not required)
     c_wc=((male&(d.wc>=90))|(female&(d.wc>=85)))
     c_glu=(d.glucose>=100)|(dmdr==1)
     c_bp=((d.sbp>=130)|(d.dbp>=85))|(hpdr==1)
@@ -206,14 +206,14 @@ def _derive_knhanes(DF, de, nc):
     c_hdl=((d.hdl<40)&male)|((d.hdl<50)&female)
     cnt=sum(x.astype("boolean").fillna(False).astype(int) for x in [c_wc,c_glu,c_bp,c_tg,c_hdl])
     d["mets"]=(cnt>=3).astype(int)
-    # 이상지질혈증: TC>=240 or HDL<40 or TG>=200 (한국 지질가이드라인)
+    # Dyslipidemia: TC>=240 or HDL<40 or TG>=200 (Korean lipid guideline)
     dld=pd.Series(False,index=d.index)
-    if de["dld"].get("TC ≥240 mg/dL"): dld|=(d.tchol>=240)
+    if de["dld"].get("TC >=240 mg/dL"): dld|=(d.tchol>=240)
     if de["dld"].get("HDL <40 mg/dL"): dld|=(d.hdl<40)
-    if de["dld"].get("TG ≥200 mg/dL"): dld|=(d.tg>=200)
+    if de["dld"].get("TG >=200 mg/dL"): dld|=(d.tg>=200)
     d["dld"]=dld.astype(int)
-    # 지방간: NAFLD-LFS(기본) 또는 HSI>36
-    if de.get("steatosis",{}).get("HSI >36 (대안)"):
+    # Hepatic steatosis: NAFLD-LFS (default) or HSI>36
+    if de.get("steatosis",{}).get("HSI >36 (alternative)"):
         hsi=8*(d.alt/d.ast)+d.bmi+np.where(female,2,0)+2*d.dm
         d["steatosis"]=(hsi>36).astype("Int64")
     else:
@@ -233,23 +233,23 @@ def _derive_nhanes(DF, de, nc):
     limb=d[["DXXLALI","DXXRALI","DXXLLLI","DXXRLLI"]].sum(axis=1); tot=d.DXDTOFAT+d.DXDTOLI
     d["fat_kg"]=d.DXDTOFAT/1000; d["lean_kg"]=d.DXDTOLI/1000; d["asmm_kg"]=limb/1000
     d["bodyfat_pct"]=d.DXDTOFAT/tot*100; d["asm_pct"]=limb/tot*100
-    # 흡연: never(SMQ020==2) vs ever(SMQ020==1)
+    # Smoking: never(SMQ020==2) vs ever(SMQ020==1)
     d["smoking"]=np.where(d.SMQ020==1,1,np.where(d.SMQ020==2,0,np.nan))
-    # 음주: never(ALQ111==2) vs ever(ALQ111==1)
+    # Alcohol: never(ALQ111==2) vs ever(ALQ111==1)
     d["alcohol"]=np.where(d.ALQ111==1,1,np.where(d.ALQ111==2,0,np.nan))
-    d["htn"]=(((d.sbp>=140)|(d.dbp>=90)) if de["htn"].get("SBP ≥140 or DBP ≥90 mmHg") else False)
+    d["htn"]=(((d.sbp>=140)|(d.dbp>=90)) if de["htn"].get("SBP >=140 or DBP >=90 mmHg") else False)
     d["htn"]=pd.Series(d["htn"],index=d.index).astype(int)
-    d["dm"]=((d.glucose>=126) if de["dm"].get("FPG ≥126 mg/dL") else False)
+    d["dm"]=((d.glucose>=126) if de["dm"].get("FPG >=126 mg/dL") else False)
     d["dm"]=pd.Series(d["dm"],index=d.index).astype(int)
     dld=pd.Series(False,index=d.index)
-    if de["dld"].get("TC ≥240 mg/dL"): dld|=(d.tchol>=240)
-    if de["dld"].get("TG ≥200 mg/dL"): dld|=(d.tg>=200)
+    if de["dld"].get("TC >=240 mg/dL"): dld|=(d.tchol>=240)
+    if de["dld"].get("TG >=200 mg/dL"): dld|=(d.tg>=200)
     d["dld"]=dld.astype(int)
     d["steatosis"]=(d.LUXCAPM>=248).astype("Int64")
     d["kstrata"]=d.SDMVSTRA; d["psu"]=d.SDMVPSU; d["wt_pool"]=d.WTMEC2YR/max(nc,1)
     return d
 
-# ── 분석 데이터 + 노출항 생성 (연속=z표준화, 이분=0/1 그대로) ──────
+# -- Analytic data + exposure term (continuous=z-standardized, binary=0/1 as-is) --
 def build_analytic(d, exposures, outcomes, covariates, age_min):
     keep=(d.age>=age_min)&(d.wt_pool>0)&d.wt_pool.notna()&d.kstrata.notna()&d.psu.notna()
     if "bodyfat_pct" in d: keep&=d.bodyfat_pct.notna()
@@ -264,7 +264,7 @@ def run_engine(ana, dataset, exposures, outcomes, covariates, workdir="."):
     cont_std=["age","bmi","wc","sbp","glucose","tg","alt","fat_kg","asmm_kg","bodyfat_pct","asm_pct"]
     cont=[c for c in dict.fromkeys(cont_std+[e for e in exposures if typ(e)=="c"]) if c in ana.columns]
     primary=outcomes[0]
-    group=primary if typ(primary)=="b" else ""     # 이분형 결과면 층화, 연속형이면 전체
+    group=primary if typ(primary)=="b" else ""     # stratify if binary outcome, whole sample if continuous
     binv=[b for b in ["men","smoking","alcohol","htn","dm","mets","dld"]
           if b!=group and b in ana.columns and ana[b].notna().any()]
     cov=[c for c in covariates if c in ana.columns]
@@ -286,14 +286,14 @@ def add_fdr(res):
     res=res.copy(); res["q"]=np.clip(q,0,1); return res
 
 def effect_str(r):
-    return f"{r.est:.2f} ({r.ci_low:.2f}–{r.ci_high:.2f})"
-def measure_name(m): return "OR" if m=="OR" else "β"
+    return f"{r.est:.2f} ({r.ci_low:.2f}-{r.ci_high:.2f})"
+def measure_name(m): return "OR" if m=="OR" else "beta"
 
-# ── LLM (ollama) + 폴백 ──────────────────────────────────────────
+# -- LLM (ollama) + fallback -----------------------------------------
 def ollama_chat(prompt, model=None, url=None, fmt=None):
     import local_llm
     return local_llm.generate(prompt, model=model, url=url, fmt=fmt)
-STYLE="의학논문 문체. 본문에 em대시, en대시, 화살표, 세미콜론, 콜론, (i)(ii) 열거 금지. First/Second/Third 허용. 수치 변경 금지."
+STYLE="Medical journal prose style. Do not use em dashes, en dashes, arrows, semicolons, colons, or (i)(ii) enumeration in the body. First/Second/Third are allowed. Do not change any numbers."
 
 def gen_manuscript(t1,res,dataset,exposures,outcomes,covariates,defs,model,url,use_llm):
     res=add_fdr(res)
@@ -309,7 +309,7 @@ def gen_manuscript(t1,res,dataset,exposures,outcomes,covariates,defs,model,url,u
            f"survey linear regression reporting beta coefficients. Findings: {fnd}.")
     if use_llm:
         try:
-            def sec(nm,ins): return ollama_chat(f"{STYLE}\n아래 사실만 근거로 논문 {nm} 단락 영어 작성. 수치 변경 금지.\n사실: {facts}\n{ins}",model,url).strip()
+            def sec(nm,ins): return ollama_chat(f"{STYLE}\nWrite the {nm} paragraph of a research paper in English, based only on the facts below. Do not change any numbers.\nFacts: {facts}\n{ins}",model,url).strip()
             return {"Methods":sec("Methods","Describe data, survey design, variable grouping, and models."),
                     "Results":sec("Results","Report each association with its effect measure, CI, FDR q."),
                     "Discussion":sec("Discussion","Interpret, note hypothesis-generating nature and limitations."),
@@ -356,19 +356,20 @@ def nl_to_config(question, dataset, model, url, use_llm):
     av=AVAIL[dataset]
     if use_llm:
         try:
-            o=json.loads(ollama_chat(f"질문을 분석설정으로. 가능한 변수(exposure/outcome 공통)={av}. "
-                f"JSON으로만 {{'exposures':[],'outcomes':[]}}.\n질문: {question}",model,url,fmt="json"))
+            o=json.loads(ollama_chat(f"Convert the question into an analysis configuration. Available variables (shared exposure/outcome)={av}. "
+                f"Return JSON only: {{'exposures':[],'outcomes':[]}}.\nQuestion: {question}",model,url,fmt="json"))
             e=[x for x in o.get("exposures",[]) if x in av]; oo=[x for x in o.get("outcomes",[]) if x in av]
             if e and oo: return {"exposures":e,"outcomes":oo,"covariates":auto_covariates(dataset,e,oo)}
         except Exception: pass
-    q=question.lower(); kw={"지방간":"steatosis","당뇨":"dm","고혈압":"htn","대사증후군":"mets","이상지질":"dld",
-        "근육":"asm_pct","체지방":"bodyfat_pct","bmi":"bmi","비만":"bmi","허리":"wc","흡연":"smoking","음주":"alcohol",
-        "혈당":"glucose","중성지방":"tg","콜레스테롤":"tchol"}
+    q=question.lower(); kw={"fatty liver":"steatosis","steatosis":"steatosis","diabetes":"dm","hypertension":"htn",
+        "metabolic syndrome":"mets","dyslipidemia":"dld","muscle":"asm_pct","body fat":"bodyfat_pct","bmi":"bmi",
+        "obesity":"bmi","waist":"wc","smoking":"smoking","alcohol":"alcohol",
+        "glucose":"glucose","triglyceride":"tg","cholesterol":"tchol"}
     hits=[v for k,v in kw.items() if k in q and v in av]
     e=[hits[0]] if hits else ["bodyfat_pct"]; oo=[hits[1]] if len(hits)>1 else ["dm" if "dm" in av else av[-1]]
     return {"exposures":e,"outcomes":oo,"covariates":auto_covariates(dataset,e,oo)}
 
-# ── Trajectory ───────────────────────────────────────────────────
+# -- Trajectory ------------------------------------------------------
 def trajectory(d, dataset, outcome, split_sex=False, bin_width=5, age_range=(20,80)):
     vs=[v for v in determinants(dataset,outcome) if v in d.columns and d[v].notna().any()]
     dd=d[(d.age>=age_range[0])&(d.age<=age_range[1])&d.wt_pool.notna()&(d.wt_pool>0)].copy()
@@ -396,7 +397,7 @@ def plot_trajectory(df, outcome, dataset, split_sex=False):
         else: ax.plot(sub.agebin,sub.value,marker="o",color="#0F6E56")
         ax.set_title(pan,fontsize=9); ax.set_xlabel("Age, years",fontsize=8); ax.grid(alpha=0.3)
     for j in range(n,nrow*ncol): axes[j//ncol][j%ncol].axis("off")
-    fig.suptitle(f"{lab(outcome)} determinants — age trajectory ({dataset}, survey-weighted)",fontsize=11)
+    fig.suptitle(f"{lab(outcome)} determinants -- age trajectory ({dataset}, survey-weighted)",fontsize=11)
     fig.tight_layout(); return fig
 
 def fig_to_b64(fig):
@@ -404,7 +405,7 @@ def fig_to_b64(fig):
     buf=io.BytesIO(); fig.savefig(buf,format="png",dpi=90,bbox_inches="tight"); plt.close(fig)
     return base64.b64encode(buf.getvalue()).decode()
 
-# ── 정적 HTML 리포트 (measure 인식) ──────────────────────────────
+# -- Static HTML report (measure-aware) ------------------------------
 def build_html_report(dataset, config, t1, res, manuscript, traj=None):
     import html as _h
     res=add_fdr(res); rows=""
@@ -420,20 +421,20 @@ def build_html_report(dataset, config, t1, res, manuscript, traj=None):
     traj_html="".join(f'<div><h3>{_h.escape(t)}</h3><img src="data:image/png;base64,{b}"></div>' for t,b in (traj or []))
     exp_n=", ".join(lab(e) for e in config.get("exp",[])); out_n=", ".join(lab(o) for o in config.get("out",[]))
     cov_n=", ".join(lab(c) for c in config.get("cov",[])); src=manuscript.get("_source","fallback")
-    return f"""<!DOCTYPE html><html lang=ko><head><meta charset=utf-8><title>Evidence Report — {dataset}</title><style>
+    return f"""<!DOCTYPE html><html lang=en><head><meta charset=utf-8><title>Evidence Report -- {dataset}</title><style>
 body{{{{font-family:system-ui,'Segoe UI',sans-serif;max-width:1000px;margin:20px auto;padding:0 18px;color:#2c2c2a;line-height:1.5}}}}
 h1{{{{font-size:22px;margin-bottom:2px}}}} h2{{{{font-size:17px;border-bottom:2px solid #d3d1c7;padding-bottom:4px;margin-top:26px}}}}
 .bar{{{{background:#F1EFE8;border-radius:10px;padding:12px 16px;font-size:13px;margin:12px 0}}}}
 table{{{{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}}}} th,td{{{{border-bottom:1px solid #e7e7e2;padding:7px;text-align:left}}}}
 th{{{{background:#fafaf7;border-bottom:2px solid #d3d1c7}}}} img{{{{max-width:100%;border:1px solid #eee;border-radius:6px}}}}</style></head><body>
-<h1>Evidence Report — {dataset}</h1>
-<div style="color:#666;font-size:14px">설계가중 · 연속형 결과=선형 β, 이분형=로지스틱 OR · 지방간 정의: {STEATOSIS_METHOD[dataset]}</div>
+<h1>Evidence Report -- {dataset}</h1>
+<div style="color:#666;font-size:14px">Survey-weighted &middot; continuous outcome = linear beta, binary = logistic OR &middot; steatosis definition: {STEATOSIS_METHOD[dataset]}</div>
 <div class=bar><b>Exposure</b>: {_h.escape(exp_n)} &nbsp;|&nbsp; <b>Outcome</b>: {_h.escape(out_n)} &nbsp;|&nbsp;
-<b>자동 보정</b>: {_h.escape(cov_n)} &nbsp;|&nbsp; 문장: {src}</div>
+<b>Auto-adjusted</b>: {_h.escape(cov_n)} &nbsp;|&nbsp; Prose: {src}</div>
 {ms_html}
 <h2>Table 1. Descriptive characteristics</h2>{t1_html}
 <h2>Table 2. Adjusted associations</h2>
 <table><thead><tr><th>Exposure</th><th>Outcome</th><th>Measure</th><th style=text-align:right>Estimate (95% CI)</th><th style=text-align:right>FDR q</th></tr></thead><tbody>{rows}</tbody></table>
-<h2>Outcome 결정변수 — 연령 trajectory</h2>{traj_html or "<p>(없음)</p>"}
-<p style="color:#888;font-size:12px;margin-top:18px">통계량은 R survey 설계가중 추정(결정론). 문장은 계산된 수치로 작성(재계산 없음). 모든 소견은 hypothesis-generating.</p>
+<h2>Outcome determinants -- age trajectory</h2>{traj_html or "<p>(none)</p>"}
+<p style="color:#888;font-size:12px;margin-top:18px">Statistics are deterministic R survey design-weighted estimates. Prose is written from the computed numbers (no recomputation). All findings are hypothesis-generating.</p>
 </body></html>"""

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""ML 예측모형 Word 보고서 — 튜닝·탐색공간·전체지표·ROC/PR·threshold·calibration·SHAP·PDP"""
+"""ML prediction Word report -- tuning, search space, full metrics, ROC/PR, threshold, calibration, SHAP, PDP"""
 import factory_core as fc, pandas as pd, numpy as np, io, warnings
 warnings.filterwarnings("ignore")
 from sklearn.model_selection import RandomizedSearchCV, train_test_split, StratifiedKFold
@@ -55,7 +55,7 @@ def build_ml_report(dataset, DF, outcome, predictors, defs, model, url, use_llm,
         bp={k.replace("clf__",""):v for k,v in rs.best_params_.items()}
         tune_rows.append({"model":name,"n_iter":rs.n_iter_ if hasattr(rs,"n_iter_") else len(rs.cv_results_["params"]),
                           "CV_auROC":round(rs.best_score_,4),"best_params":str(bp)})
-    # 전체 성능지표 (test)
+    # Full performance metrics (test)
     rows=[]; probs={}
     for name,estm in tuned.items():
         p=estm.predict_proba(Xte)[:,1]; probs[name]=p; m=_metrics(yte,p)
@@ -63,7 +63,7 @@ def build_ml_report(dataset, DF, outcome, predictors, defs, model, url, use_llm,
         rows.append(m)
     metrics=pd.DataFrame(rows).sort_values("combined",ascending=False).reset_index(drop=True)
     best=metrics.model.iloc[0]; best_est=tuned[best]; pbest=probs[best]
-    # 곡선 그림
+    # Curve figures
     import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
     def fig_roc_pr():
         fig,ax=plt.subplots(1,2,figsize=(9,4))
@@ -76,14 +76,14 @@ def build_ml_report(dataset, DF, outcome, predictors, defs, model, url, use_llm,
     def fig_cal():
         fig,ax=plt.subplots(figsize=(5,4)); fr,mp=calibration_curve(yte,pbest,n_bins=10,strategy="quantile")
         ax.plot(mp,fr,"o-",color="#0F6E56"); ax.plot([0,1],[0,1],"--",color="#999")
-        ax.set_title(f"Calibration — {best}"); ax.set_xlabel("Predicted"); ax.set_ylabel("Observed"); fig.tight_layout(); return fig
-    # threshold 분석
+        ax.set_title(f"Calibration -- {best}"); ax.set_xlabel("Predicted"); ax.set_ylabel("Observed"); fig.tight_layout(); return fig
+    # Threshold analysis
     thr_rows=[]
     for t in np.arange(0.1,0.95,0.1):
         m=_metrics(yte,pbest,t); thr_rows.append({"threshold":round(t,1),**{k:m[k] for k in ["TP","TN","FP","FN","sensitivity","specificity","PPV","NPV","f1","accuracy"]}})
     thr=pd.DataFrame(thr_rows)
     for c in ["sensitivity","specificity","PPV","NPV","f1","accuracy"]: thr[c]=thr[c].round(3)
-    # SHAP (tree면 TreeExplainer, 아니면 중요도 대체)
+    # SHAP (TreeExplainer for tree models, otherwise importance fallback)
     import shap
     Xte_df=pd.DataFrame(Xte,columns=feats); samp=Xte_df.sample(min(150,len(Xte_df)),random_state=0)
     shap_fig=None
@@ -100,7 +100,7 @@ def build_ml_report(dataset, DF, outcome, predictors, defs, model, url, use_llm,
     except Exception as e:
         imp=pd.Series(getattr(best_est.named_steps["clf"],"feature_importances_",np.zeros(len(feats))),index=feats).sort_values()
         fig,ax=plt.subplots(figsize=(6,4)); ax.barh(imp.index,imp.values,color="#245"); ax.set_title("Feature importance"); fig.tight_layout(); shap_fig=fig
-    # PDP (상위 2 피처)
+    # PDP (top 2 features)
     from sklearn.inspection import PartialDependenceDisplay
     try:
         imp=getattr(best_est.named_steps["clf"],"feature_importances_",None)
@@ -108,17 +108,17 @@ def build_ml_report(dataset, DF, outcome, predictors, defs, model, url, use_llm,
         figp,axp=plt.subplots(1,len(top),figsize=(4*len(top),3.5))
         PartialDependenceDisplay.from_estimator(best_est,Xte,top,feature_names=feats,ax=axp); figp.tight_layout()
     except Exception:
-        figp,axp=plt.subplots(figsize=(4,3)); axp.text(0.5,0.5,"PDP 미가용",ha="center"); figp.tight_layout()
-    # 해석
+        figp,axp=plt.subplots(figsize=(4,3)); axp.text(0.5,0.5,"PDP unavailable",ha="center"); figp.tight_layout()
+    # Interpretation
     bm=metrics.iloc[0]; facts=f"Best model {best}: auROC {bm.auROC}, auPRC {bm.auPRC}, combined {bm.combined}."
     interp=""
     if use_llm:
-        try: interp=fc.ollama_chat(f"{fc.STYLE}\nML 예측모형 결과를 논문 문장으로. 수치변경 금지.\n{facts}",model,url).strip()
+        try: interp=fc.ollama_chat(f"{fc.STYLE}\nWrite the ML prediction-model results below as journal prose. Do not change any numbers.\n{facts}",model,url).strip()
         except Exception: interp=""
     if not interp:
         interp=(f"Among the evaluated models, {best} achieved the highest combined score, with an area under the "
                 f"receiver operating characteristic curve of {bm.auROC} and an area under the precision-recall curve of {bm.auPRC}.")
-    # ── docx ──
+    # -- docx --
     from docx import Document; from docx.shared import Inches
     def emb(fig,w=6.0):
         b=io.BytesIO(); fig.savefig(b,format="png",dpi=110,bbox_inches="tight"); b.seek(0); plt.close(fig); doc.add_picture(b,width=Inches(w))
@@ -130,19 +130,19 @@ def build_ml_report(dataset, DF, outcome, predictors, defs, model, url, use_llm,
         for _,r in df.iterrows():
             cc=tb.add_row().cells
             for j,c in enumerate(cols): cc[j].text=str(r[c])
-    doc=Document(); doc.add_heading("ML 예측모형 보고서",0)
-    doc.add_paragraph(f"{fc.lab(outcome)} · {dataset} · 탐색범위·튜닝·전체지표·threshold·SHAP·PDP")
+    doc=Document(); doc.add_heading("ML Prediction Model Report",0)
+    doc.add_paragraph(f"{fc.lab(outcome)} - {dataset} - search space, tuning, full metrics, threshold, SHAP, PDP")
     doc.add_paragraph(f"[ML] outcome = {outcome}")
-    tab("데이터 요약", pd.DataFrame({"항목":["N","결과 유병(%)","피처 수","학습/검증"],
-        "내용":[len(ana),f"{100*y.mean():.1f}",len(feats),f"{len(ytr)}/{len(yte)} (70/30 stratified)"]}))
-    ss=pd.DataFrame([{"모델":k,"탐색 범위":str({kk.replace('clf__',''):vv for kk,vv in g.items()})} for k,(e,g) in SPACES.items()])
-    tab("하이퍼파라미터 탐색공간", ss)
-    tab("튜닝 결과 — best 파라미터·CV auROC", pd.DataFrame(tune_rows))
-    tab("전체 성능지표 (test set)", metrics)
-    doc.add_heading("ROC · Precision-Recall",1); emb(fig_roc_pr(),6.5)
-    doc.add_heading(f"최종 선정 모델 — {best} (combined={bm.combined})",1); doc.add_paragraph(interp)
-    tab("Threshold 분석 (0.1~0.9)", thr)
+    tab("Data summary", pd.DataFrame({"Item":["N","Outcome prevalence (%)","Number of features","Train/test"],
+        "Value":[len(ana),f"{100*y.mean():.1f}",len(feats),f"{len(ytr)}/{len(yte)} (70/30 stratified)"]}))
+    ss=pd.DataFrame([{"Model":k,"Search space":str({kk.replace('clf__',''):vv for kk,vv in g.items()})} for k,(e,g) in SPACES.items()])
+    tab("Hyperparameter search space", ss)
+    tab("Tuning results -- best params, CV auROC", pd.DataFrame(tune_rows))
+    tab("Full performance metrics (test set)", metrics)
+    doc.add_heading("ROC / Precision-Recall",1); emb(fig_roc_pr(),6.5)
+    doc.add_heading(f"Final selected model -- {best} (combined={bm.combined})",1); doc.add_paragraph(interp)
+    tab("Threshold analysis (0.1-0.9)", thr)
     doc.add_heading("Calibration",1); emb(fig_cal(),4.8)
-    doc.add_heading("SHAP 변수 기여도",1); emb(shap_fig,6.0)
-    doc.add_heading("부분의존도(PDP)",1); emb(figp,4*len(feats[:2]) if feats else 4)
+    doc.add_heading("SHAP feature contributions",1); emb(shap_fig,6.0)
+    doc.add_heading("Partial dependence (PDP)",1); emb(figp,4*len(feats[:2]) if feats else 4)
     buf=io.BytesIO(); doc.save(buf); return buf.getvalue()
