@@ -1,0 +1,10 @@
+streamlit
+pandas
+numpy
+pyreadstat
+python-docx
+matplotlib
+scikit-learn
+shap
+xgboost
+requests
