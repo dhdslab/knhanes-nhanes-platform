@@ -30,3 +30,12 @@ __pycache__/
 Thumbs.db
 .ipynb_checkpoints/
 .agents/
+
+# -------- RAG search index (build artifact; users regenerate it) --------
+rag/_index/
+_index/
+
+# -------- Supplementary evidence reports: committed on purpose --------
+# (overrides the *.docx rule above, only inside suppl/)
+!suppl/
+!suppl/**

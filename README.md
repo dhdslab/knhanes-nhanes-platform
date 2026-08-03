@@ -60,6 +60,8 @@ flowchart LR
 | `ml_report.py` | 6-model registry, tuning, ROC/PR, calibration, SHAP, PDP |
 | `local_llm.py` | ollama client with deterministic fallback |
 | `preflight.py` | Environment / dependency checks |
+| `suppl/` | 7,584 generated evidence reports (Word) + association manifests |
+| `rag/` | Plain-language retrieval-augmented search over the reports |
 
 ---
 
@@ -111,6 +113,33 @@ Raw microdata is **not** included in this repository and must never be committed
 - NHANES: `data/NHANES/demo_{cycle}.sas7bdat`, `bmx_*`, `glu_*`, `ghb_*`, ... (or the original `.XPT`)
 
 Set the data folder in the app sidebar. The loader searches recursively and normalizes column-name casing.
+
+---
+
+## Evidence reports and plain-language search (RAG)
+
+The full corpus of **7,584 machine-generated, audited analysis reports** (Word) is included under [`suppl/`](suppl/), together with the two association manifests (`suppl/_manifest_association_{KNHANES,NHANES}.csv` — every pair with estimate, 95% CI, p, FDR q, N, and adjustment set). A small **retrieval-augmented search tool** in [`rag/`](rag/) lets anyone — not only a statistician — ask a plain-language question and get the exact answer with a link to the source report.
+
+```
+suppl/{KNHANES,NHANES}/association/<Outcome>/<Exposure>__<Outcome>_<SURVEY>.docx
+                       trend/<Outcome>__trend_<SURVEY>.docx
+                       ml/<Outcome>__prediction_<SURVEY>.docx
+```
+
+**Use it (no expertise required):**
+
+```bash
+pip install -r rag/requirements.txt
+python rag/build_index.py          # one time; reads suppl/ and builds a local index
+streamlit run rag/app.py           # open the browser tab and type a question
+# or from the command line:
+python rag/ask.py "Is uric acid associated with hypertension in NHANES?"
+python rag/ask.py "odds ratio for BMI and diabetes" --survey KNHANES
+```
+
+By default the search uses TF-IDF and needs **no external service**. For semantic search and written answers, install [Ollama](https://ollama.com) (`ollama pull bge-m3 && ollama pull llama3.2`) and add `--backend ollama` when building the index.
+
+**Guarantee.** The tool retrieves and quotes; **it never generates a number.** Answers are grounded only in the retrieved reports, with every figure copied verbatim and each claim cited to its source report, mirroring the platform's provenance rule. All results are cross-sectional and hypothesis-generating. See [`rag/README.md`](rag/README.md) for full details.
 
 ---
 

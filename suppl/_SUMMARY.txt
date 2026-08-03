@@ -1,0 +1,14 @@
+﻿Supplementary generation v2 (association + trend + ML)  elapsed 6864s
+
+== KNHANES ==
+  association: 3592 files (3592 pairs); outcomes skipped 0
+  trend: 27 files; skipped 0
+  ml: 27 files; skipped 0
+
+== NHANES ==
+  association: 4027 files (4027 pairs); outcomes skipped 0
+  trend: 25 files; skipped 2
+      - Hepatic steatosis: steatosis: fewer than 2 survey cycles have data (cannot compute a trend).
+      - MASLD: masld: fewer than 2 survey cycles have data (cannot compute a trend).
+  ml: 27 files; skipped 0
+
