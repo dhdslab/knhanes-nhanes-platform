@@ -55,8 +55,9 @@ def build_trend_report(dataset, data_dir, years, outcome, defs, model, url, use_
     a=apc.iloc[0]; facts=f"{fc.lab(outcome)} annual percent change {a.APC_pct}% (95% CI {a.lo95} to {a.hi95})."
     interp=""
     if use_llm:
-        try: interp=fc.ollama_chat(f"{fc.STYLE}\nWrite the trend-analysis results below as journal prose. Do not change any numbers.\n{facts}",model,url).strip()
-        except Exception: interp=""
+        # report-writer agent; fc.llm_prose enforces the numeric guard and falls back below
+        interp=fc.llm_prose("Write the temporal-trend results as journal prose.",
+                            facts, model, url)
     if not interp:
         d_="increase" if a.APC_pct>0 else "decrease"
         interp=(f"The age-sex standardized prevalence of {fc.lab(outcome)} showed an annual percent change of "
