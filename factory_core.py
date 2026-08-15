@@ -4,7 +4,7 @@
 - Smoking/alcohol grouped as never vs past/current, survey-weighted
 - Covariates auto-selected once exposure and outcome are chosen
 All statistics are deterministic (R survey). """
-import pyreadstat, pandas as pd, numpy as np, glob, json, subprocess, os
+import pyreadstat, pandas as pd, numpy as np, glob, json, subprocess, os, re
 
 # -- Unified variable registry (type: c=continuous, b=binary) --------
 VARS={
@@ -294,6 +294,45 @@ def ollama_chat(prompt, model=None, url=None, fmt=None):
     import local_llm
     return local_llm.generate(prompt, model=model, url=url, fmt=fmt)
 STYLE="Medical journal prose style. Do not use em dashes, en dashes, arrows, semicolons, colons, or (i)(ii) enumeration in the body. First/Second/Third are allowed. Do not change any numbers."
+
+# -- report-writer invariant ---------------------------------------------------
+# The report-writer agent may compose prose but may never introduce or alter a
+# number. The prompt states this; the guard below *enforces* it. Any generated
+# sentence containing a numeric token absent from the deterministic fact string
+# is discarded and the deterministic template is emitted instead, so no number
+# that did not originate in the R survey / scikit-learn core can reach a report.
+_NUM_TOKEN=re.compile(r"\d+(?:\.\d+)?")
+
+def _num_tokens(text):
+    """Numeric tokens of `text`, with thousands separators removed so that a
+    generated '37,636' matches a computed '37636'. Trailing zeros are NOT
+    normalised: 1.8 must not be accepted in place of 1.88."""
+    return set(_NUM_TOKEN.findall((text or "").replace(",","")))
+
+def numeric_guard(generated, facts):
+    """True iff every numeric token in `generated` is an exact token of `facts`.
+
+    Exact-token (not substring) matching is deliberate: substring matching would
+    accept a truncated '1.8' for a computed '1.88'. Rejection is safe -- the
+    caller falls back to the deterministic template."""
+    return _num_tokens(generated) <= _num_tokens(facts)
+
+LLM_PROSE_STATS={"llm":0,"fallback":0,"violation":0,"error":0}
+
+def llm_prose(instruction, facts, model=None, url=None, min_chars=80):
+    """Ask the report-writer agent for prose and return it only if it passes the
+    numeric guard. Returns "" so the caller falls back to its deterministic
+    template. Every outcome is tallied in LLM_PROSE_STATS for the audit trail."""
+    prompt="\n".join([STYLE, instruction, "Facts: "+str(facts)])
+    try:
+        out=ollama_chat(prompt,model,url).strip()
+    except Exception:
+        LLM_PROSE_STATS["error"]+=1; return ""
+    if len(out)<min_chars:
+        LLM_PROSE_STATS["fallback"]+=1; return ""
+    if not numeric_guard(out,facts):
+        LLM_PROSE_STATS["violation"]+=1; return ""
+    LLM_PROSE_STATS["llm"]+=1; return out
 
 def gen_manuscript(t1,res,dataset,exposures,outcomes,covariates,defs,model,url,use_llm):
     res=add_fdr(res)

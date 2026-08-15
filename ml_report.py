@@ -46,23 +46,35 @@ def build_ml_report(dataset, DF, outcome, predictors, defs, model, url, use_llm,
     keep=X.notna().mean(axis=0)>0.3; X=X.loc[:,keep]; feats=list(X.columns)
     Xtr,Xte,ytr,yte=train_test_split(X.values,y,test_size=0.3,random_state=0,stratify=y)
     cv=StratifiedKFold(3,shuffle=True,random_state=0)
-    tuned={}; tune_rows=[]
+    tuned={}; tune_rows=[]; cv_sel={}
     for name,(est,grid) in SPACES.items():
         pipe=Pipeline([("imp",SimpleImputer(strategy="median")),("sc",StandardScaler()),("clf",est)])
+        # Multi-metric CV on the TRAINING partition only. Both the hyperparameter search and
+        # the between-model choice read these numbers; the test partition is never consulted.
         rs=RandomizedSearchCV(pipe,grid,n_iter=min(8,int(np.prod([len(v) for v in grid.values()]))),
-            scoring="roc_auc",cv=cv,random_state=0,n_jobs=-1)
+            scoring={"roc_auc":"roc_auc","ap":"average_precision"},refit="roc_auc",
+            cv=cv,random_state=0,n_jobs=-1)
         rs.fit(Xtr,ytr); tuned[name]=rs.best_estimator_
+        bi=rs.best_index_
+        cv_roc=float(rs.cv_results_["mean_test_roc_auc"][bi]); cv_ap=float(rs.cv_results_["mean_test_ap"][bi])
+        cv_sel[name]=round((cv_roc+cv_ap)/2,4)
         bp={k.replace("clf__",""):v for k,v in rs.best_params_.items()}
         tune_rows.append({"model":name,"n_iter":rs.n_iter_ if hasattr(rs,"n_iter_") else len(rs.cv_results_["params"]),
-                          "CV_auROC":round(rs.best_score_,4),"best_params":str(bp)})
-    # Full performance metrics (test)
+                          "CV_auROC":round(cv_roc,4),"CV_auPRC":round(cv_ap,4),
+                          "CV_combined":cv_sel[name],"best_params":str(bp)})
+    # Model selection: highest cross-validated combined score on the training partition.
+    # The selected estimator is already refitted on the full training partition by
+    # RandomizedSearchCV(refit=...), and is evaluated once below on the held-out partition.
+    best=max(cv_sel,key=cv_sel.get); best_est=tuned[best]
+    # Held-out performance, reported for every candidate but used for none of the selection
     rows=[]; probs={}
     for name,estm in tuned.items():
         p=estm.predict_proba(Xte)[:,1]; probs[name]=p; m=_metrics(yte,p)
-        m["combined"]=round((m["auROC"]+m["auPRC"])/2,4); m={"model":name,**{k:(round(v,4) if isinstance(v,float) else v) for k,v in m.items()}}
+        m["combined"]=round((m["auROC"]+m["auPRC"])/2,4)
+        m={"model":name,"CV_combined":cv_sel[name],**{k:(round(v,4) if isinstance(v,float) else v) for k,v in m.items()}}
         rows.append(m)
-    metrics=pd.DataFrame(rows).sort_values("combined",ascending=False).reset_index(drop=True)
-    best=metrics.model.iloc[0]; best_est=tuned[best]; pbest=probs[best]
+    metrics=pd.DataFrame(rows).sort_values("CV_combined",ascending=False).reset_index(drop=True)
+    pbest=probs[best]
     # Curve figures
     import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
     def fig_roc_pr():
@@ -110,14 +122,23 @@ def build_ml_report(dataset, DF, outcome, predictors, defs, model, url, use_llm,
     except Exception:
         figp,axp=plt.subplots(figsize=(4,3)); axp.text(0.5,0.5,"PDP unavailable",ha="center"); figp.tight_layout()
     # Interpretation
-    bm=metrics.iloc[0]; facts=f"Best model {best}: auROC {bm.auROC}, auPRC {bm.auPRC}, combined {bm.combined}."
+    bm=metrics[metrics.model==best].iloc[0]
+    facts=(f"Model selected by cross-validation on the training partition: {best} "
+           f"(CV combined {bm.CV_combined}). Held-out test performance: auROC {bm.auROC}, "
+           f"auPRC {bm.auPRC}.")
     interp=""
     if use_llm:
-        try: interp=fc.ollama_chat(f"{fc.STYLE}\nWrite the ML prediction-model results below as journal prose. Do not change any numbers.\n{facts}",model,url).strip()
-        except Exception: interp=""
+        # report-writer agent; fc.llm_prose enforces the numeric guard and falls back below
+        interp=fc.llm_prose("Write the machine-learning prediction results as journal prose. "
+                            "State that the model was selected by cross-validation within the "
+                            "training partition and evaluated once on the held-out partition.",
+                            facts, model, url)
     if not interp:
-        interp=(f"Among the evaluated models, {best} achieved the highest combined score, with an area under the "
-                f"receiver operating characteristic curve of {bm.auROC} and an area under the precision-recall curve of {bm.auPRC}.")
+        interp=(f"Among the evaluated models, {best} achieved the highest cross-validated combined score "
+                f"({bm.CV_combined}) within the training partition and was selected on that basis. "
+                f"Refitted on the complete training partition and evaluated once on the untouched "
+                f"held-out partition, it reached an area under the receiver operating characteristic "
+                f"curve of {bm.auROC} and an area under the precision-recall curve of {bm.auPRC}.")
     # -- docx --
     from docx import Document; from docx.shared import Inches
     def emb(fig,w=6.0):
@@ -140,7 +161,7 @@ def build_ml_report(dataset, DF, outcome, predictors, defs, model, url, use_llm,
     tab("Tuning results -- best params, CV auROC", pd.DataFrame(tune_rows))
     tab("Full performance metrics (test set)", metrics)
     doc.add_heading("ROC / Precision-Recall",1); emb(fig_roc_pr(),6.5)
-    doc.add_heading(f"Final selected model -- {best} (combined={bm.combined})",1); doc.add_paragraph(interp)
+    doc.add_heading(f"Final selected model -- {best} (CV combined={bm.CV_combined}; held-out auROC={bm.auROC})",1); doc.add_paragraph(interp)
     tab("Threshold analysis (0.1-0.9)", thr)
     doc.add_heading("Calibration",1); emb(fig_cal(),4.8)
     doc.add_heading("SHAP feature contributions",1); emb(shap_fig,6.0)
