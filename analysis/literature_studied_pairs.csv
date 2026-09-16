@@ -1,0 +1,244 @@
+﻿papers,in_corpus,abs_log_or,a,b
+1,True,0.7029560828471197,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),Insulin resistance (HOMA-IR>=2.5)
+1,True,0.8610740217743045,"Overweight (KSSO >=23 / WHO >=25, country-specific)","Alanine aminotransferase, IU/L"
+6,True,0.2849052540249139,Ever alcohol (past/current),Metabolic syndrome
+3,True,,"Serum 25(OH)D, ng/mL","Femoral neck BMD, g/cm2"
+6,True,0.39227349941369055,Ever smoking (past/current),Metabolic syndrome
+1,True,1.4113603398581613,"Overweight (KSSO >=23 / WHO >=25, country-specific)","Osteoporosis (T-score<=-2.5, age>=50)"
+1,False,,Hypertension,Metabolic syndrome
+6,True,1.333552678672087,Diabetes mellitus,"Obesity (KSSO >=25 / WHO >=30, country-specific)"
+7,True,1.020484190157488,Hypertension,"Obesity (KSSO >=25 / WHO >=30, country-specific)"
+4,True,2.118390980688332,"Obesity (KSSO >=25 / WHO >=30, country-specific)",Metabolic syndrome
+2,False,,"Overweight (KSSO >=23 / WHO >=25, country-specific)","Obesity (KSSO >=25 / WHO >=30, country-specific)"
+2,True,0.36761131237083594,"Osteoporosis (T-score<=-2.5, age>=50)",Diabetes mellitus
+5,True,1.3369661278953726,"Body mass index, kg/m2",Metabolic syndrome
+1,True,0.60450747376948,Hypertension,"Body mass index, kg/m2"
+2,False,,Diabetes mellitus,Metabolic syndrome
+1,True,,"Alanine aminotransferase, IU/L","Body mass index, kg/m2"
+4,False,,Diabetes mellitus,"Fasting glucose, mg/dL"
+8,True,0.18437111584616073,"Serum 25(OH)D, ng/mL",Insulin resistance (HOMA-IR>=2.5)
+3,True,0.4026285611420519,Diabetes mellitus,Vitamin D deficiency (<20 ng/mL)
+3,False,,Hepatic steatosis,Metabolic syndrome
+1,True,0.6336948160368365,"Alanine aminotransferase, IU/L",Metabolic syndrome
+3,True,1.1395355644755014,Hypertension,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30)
+6,True,1.1516078047068061,Diabetes mellitus,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30)
+1,False,,Metabolic syndrome,"HDL cholesterol, mg/dL"
+4,True,,"Total fat mass, kg","Femoral neck BMD, g/cm2"
+2,True,,"Total lean mass, kg","Femoral neck BMD, g/cm2"
+1,True,0.21344727756023402,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),"White blood cell count, 10^3/uL"
+1,True,0.2828516774333946,Hypertriglyceridemia (NCEP TG>=150),Prediabetes
+1,True,0.02775604612300262,Ever alcohol (past/current),"Aspartate aminotransferase, IU/L"
+2,True,1.3047441263668131,"Age, years",Hypertension
+1,True,0.3076521785796165,Ever alcohol (past/current),Insulin resistance (HOMA-IR>=2.5)
+4,True,0.11317437279170546,Diabetes mellitus,"Serum uric acid, mg/dL"
+1,True,0.8977330315656654,"Osteoporosis (T-score<=-2.5, age>=50)",Hepatic steatosis
+7,True,0.4123100076634175,Ever alcohol (past/current),Diabetes mellitus
+1,False,,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),"eGFR (CKD-EPI 2021), mL/min/1.73m2"
+5,True,0.765097910818375,"Serum uric acid, mg/dL",Metabolic syndrome
+2,True,0.26173468019045376,Ever alcohol (past/current),Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30)
+2,True,0.22106212639316827,Ever smoking (past/current),"Hemoglobin, g/dL"
+3,True,0.35709021597980944,"Low muscle mass (low ASMI, AWGS cut)",Vitamin D deficiency (<20 ng/mL)
+5,False,,"Osteoporosis (T-score<=-2.5, age>=50)","Femoral neck BMD, g/cm2"
+10,True,0.1689394177274792,"Serum 25(OH)D, ng/mL",Diabetes mellitus
+3,True,0.24136534879374744,Ever smoking (past/current),Dyslipidemia (KSoLA composite)
+1,True,0.17417190339044578,Hypertension,"eGFR (CKD-EPI 2021), mL/min/1.73m2"
+2,True,0.1543211193403229,"eGFR (CKD-EPI 2021), mL/min/1.73m2",Metabolic syndrome
+1,True,0.5213646298077749,"Overweight (KSSO >=23 / WHO >=25, country-specific)",Anemia (WHO)
+8,True,0.31320963017145065,"Serum 25(OH)D, ng/mL",Metabolic syndrome
+1,True,0.33371446493266965,"Serum 25(OH)D, ng/mL",Ever alcohol (past/current)
+2,True,0.5529629873741331,"Serum uric acid, mg/dL",Hepatic steatosis
+1,True,1.007417870495412,"HbA1c, %",Metabolic syndrome
+3,True,1.2927939997580942,"Low muscle mass (low ASMI, AWGS cut)",Insulin resistance (HOMA-IR>=2.5)
+1,True,,"Serum 25(OH)D, ng/mL","Hemoglobin, g/dL"
+1,True,0.2258848006623091,"Osteoporosis (T-score<=-2.5, age>=50)",Dyslipidemia (KSoLA composite)
+3,True,,"Serum 25(OH)D, ng/mL","Body mass index, kg/m2"
+1,True,0.8284216418830217,"Osteoporosis (T-score<=-2.5, age>=50)",Metabolic syndrome
+1,True,0.15249081967268788,"Femoral neck BMD, g/cm2",Vitamin D deficiency (<20 ng/mL)
+1,True,0.7805838482212685,"Low muscle mass (low ASMI, AWGS cut)","Femoral neck BMD, g/cm2"
+2,True,0.15579594592581072,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),"Femoral neck BMD, g/cm2"
+4,True,0.49919561865384027,"Femoral neck BMD, g/cm2",Metabolic syndrome
+2,True,0.12192922636031749,"Age, years","Obesity (KSSO >=25 / WHO >=30, country-specific)"
+2,True,0.18464874222828337,"Serum 25(OH)D, ng/mL","Osteoporosis (T-score<=-2.5, age>=50)"
+1,True,0.12456448166168287,Prediabetes,"Hemoglobin, g/dL"
+1,True,0.22128299356356404,"Platelet count, 10^3/uL",Metabolic syndrome
+1,True,0.5108391120262417,"Obesity (KSSO >=25 / WHO >=30, country-specific)","Systolic blood pressure, mmHg"
+2,True,,"Body fat, %","Femoral neck BMD, g/cm2"
+3,True,1.9252841360552706,"Low muscle mass (low ASMI, AWGS cut)","Osteoporosis (T-score<=-2.5, age>=50)"
+2,True,0.17444875663732348,Ever alcohol (past/current),"Obesity (KSSO >=25 / WHO >=30, country-specific)"
+1,False,,"Waist circumference, cm","Body mass index, kg/m2"
+7,True,2.23345272702575,"Low muscle mass (low ASMI, AWGS cut)",Metabolic syndrome
+1,True,0.4376975813451781,"Osteoporosis (T-score<=-2.5, age>=50)",Vitamin D deficiency (<20 ng/mL)
+1,True,0.6373938947589916,"Osteoporosis (T-score<=-2.5, age>=50)",Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30)
+1,False,,"Systolic blood pressure, mmHg",Metabolic syndrome
+1,True,,"Age, years","HbA1c, %"
+5,True,,"Femoral neck BMD, g/cm2","Body mass index, kg/m2"
+2,True,0.3852448946222496,"HbA1c, %",Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30)
+4,True,0.317983775620261,"Serum 25(OH)D, ng/mL",Anemia (WHO)
+1,True,0.23273559876276723,"Low muscle mass (low ASMI, AWGS cut)","White blood cell count, 10^3/uL"
+7,True,0.8809017137557531,"Femoral neck BMD, g/cm2","Obesity (KSSO >=25 / WHO >=30, country-specific)"
+6,True,0.21743795638856808,Hypertension,Ever alcohol (past/current)
+1,True,0.19376709143564988,"Osteoporosis (T-score<=-2.5, age>=50)","Serum creatinine, mg/dL"
+2,True,0.0584333151892505,"Serum 25(OH)D, ng/mL",Hypertension
+2,True,0.5013568161991582,"Low muscle mass (low ASMI, AWGS cut)",Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30)
+1,False,,"Hemoglobin, g/dL",Anemia (WHO)
+1,True,0.07278675760447947,Advanced liver fibrosis (FIB-4>2.67),"Triglycerides, mg/dL"
+6,True,,"Femoral neck BMD, g/cm2","Serum uric acid, mg/dL"
+4,True,0.35147270223686167,"Serum 25(OH)D, ng/mL","Obesity (KSSO >=25 / WHO >=30, country-specific)"
+1,True,0.1368828592948817,Ever alcohol (past/current),"Hemoglobin, g/dL"
+1,True,2.03287053062621,Insulin resistance (HOMA-IR>=2.5),"Obesity (KSSO >=25 / WHO >=30, country-specific)"
+1,True,0.4379888080851085,Male sex,Metabolic syndrome
+4,True,0.24386163133299124,Ever alcohol (past/current),"Femoral neck BMD, g/cm2"
+2,True,0.05097484435898101,Ever smoking (past/current),"Obesity (KSSO >=25 / WHO >=30, country-specific)"
+1,True,,"eGFR (CKD-EPI 2021), mL/min/1.73m2","Hemoglobin, g/dL"
+2,True,0.25965261523450384,Ever alcohol (past/current),Dyslipidemia (KSoLA composite)
+5,True,0.15106090211361076,Diabetes mellitus,"Femoral neck BMD, g/cm2"
+3,False,,"Low muscle mass (low ASMI, AWGS cut)",Hepatic steatosis
+1,True,,"Serum 25(OH)D, ng/mL","Alanine aminotransferase, IU/L"
+2,True,0.029854127116115122,Ever smoking (past/current),"Body mass index, kg/m2"
+1,True,,"Body fat, %","HbA1c, %"
+1,True,,"Total lean mass, kg","HbA1c, %"
+1,True,0.22397719826847184,"Platelet count, 10^3/uL","Obesity (KSSO >=25 / WHO >=30, country-specific)"
+1,True,0.442048202242489,Vitamin D deficiency (<20 ng/mL),Metabolic syndrome
+2,True,,"Femoral neck BMD, g/cm2","Hemoglobin, g/dL"
+4,True,0.41982857303218263,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),"Obesity (KSSO >=25 / WHO >=30, country-specific)"
+4,True,0.2328598980357011,Ever smoking (past/current),Hypertension
+2,True,0.3276205301015707,Hepatic steatosis,Vitamin D deficiency (<20 ng/mL)
+1,True,0.14889861013975353,Ever alcohol (past/current),Abdominal obesity
+2,True,0.35096744776291494,"Low muscle mass (low ASMI, AWGS cut)",Ever alcohol (past/current)
+1,False,,"Overweight (KSSO >=23 / WHO >=25, country-specific)","Height, cm"
+1,True,0.3966881090731517,Insulin resistance (HOMA-IR>=2.5),"White blood cell count, 10^3/uL"
+1,True,0.130978648645381,Diabetes mellitus,"Systolic blood pressure, mmHg"
+2,True,0.7656620945223557,Abdominal obesity,"Femoral neck BMD, g/cm2"
+2,True,1.7692330001942354,Ever smoking (past/current),Ever alcohol (past/current)
+1,True,0.1300878786653043,Ever smoking (past/current),"HbA1c, %"
+1,True,0.08731956022236101,"Platelet count, 10^3/uL",Insulin resistance (HOMA-IR>=2.5)
+1,True,,"Total fat mass, kg","Serum 25(OH)D, ng/mL"
+1,True,0.3175693124808331,"Low muscle mass (low ASMI, AWGS cut)",Advanced liver fibrosis (FIB-4>2.67)
+1,True,0.006422595654698023,"Age, years","Low muscle mass (low ASMI, AWGS cut)"
+1,True,0.5140915327887133,"Total fat mass, kg",Hypertension
+3,True,0.21336499088209354,Diabetes mellitus,"Hemoglobin, g/dL"
+2,True,0.40500864071247933,"Obesity (KSSO >=25 / WHO >=30, country-specific)","Hemoglobin, g/dL"
+2,True,1.1514867536975268,Insulin resistance (HOMA-IR>=2.5),"Appendicular skeletal muscle mass, kg"
+2,True,1.4939483414713801,"Total fat mass, kg",Insulin resistance (HOMA-IR>=2.5)
+1,True,0.15545846734342753,Prediabetes,"Serum uric acid, mg/dL"
+3,True,0.021364953098904304,"Serum uric acid, mg/dL",Anemia (WHO)
+1,False,,Insulin resistance (HOMA-IR>=2.5),Metabolic syndrome
+1,True,0.0846798627909996,"Height, cm",Dyslipidemia (KSoLA composite)
+2,False,,Hypertension,Hepatic steatosis
+2,False,,Diabetes mellitus,"HbA1c, %"
+5,True,0.3105139585141629,"Serum 25(OH)D, ng/mL",Hepatic steatosis
+1,True,0.7284701426819292,"Triglycerides, mg/dL",Insulin resistance (HOMA-IR>=2.5)
+1,True,,"Appendicular skeletal muscle mass, kg","HDL cholesterol, mg/dL"
+4,False,,"Obesity (KSSO >=25 / WHO >=30, country-specific)",Hepatic steatosis
+1,False,,"Obesity (KSSO >=25 / WHO >=30, country-specific)","Height, cm"
+1,True,0.2416152522125289,Hypertension,Vitamin D deficiency (<20 ng/mL)
+1,True,0.3825195197220618,Ever smoking (past/current),"Low muscle mass (low ASMI, AWGS cut)"
+1,True,,"Serum 25(OH)D, ng/mL","eGFR (CKD-EPI 2021), mL/min/1.73m2"
+4,True,0.02634887598162569,Ever smoking (past/current),"Serum uric acid, mg/dL"
+7,True,0.20720493291913097,"Serum 25(OH)D, ng/mL","Low muscle mass (low ASMI, AWGS cut)"
+2,True,,"Serum 25(OH)D, ng/mL","Serum uric acid, mg/dL"
+1,True,2.5496269130529785,"Overweight (KSSO >=23 / WHO >=25, country-specific)",Metabolic syndrome
+1,True,1.4494621077056478,Insulin resistance (HOMA-IR>=2.5),"Body mass index, kg/m2"
+2,True,0.7986073741547121,Hypertension,Diabetes mellitus
+1,True,0.07024904832824636,Ever smoking (past/current),"Overweight (KSSO >=23 / WHO >=25, country-specific)"
+2,True,0.14270295530828936,"Obesity (KSSO >=25 / WHO >=30, country-specific)","eGFR (CKD-EPI 2021), mL/min/1.73m2"
+2,False,,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),Hepatic steatosis
+1,True,,"Platelet count, 10^3/uL","Femoral neck BMD, g/cm2"
+1,True,0.22056927233184687,"Serum uric acid, mg/dL",Dyslipidemia (KSoLA composite)
+1,False,,Diabetes mellitus,Hepatic steatosis
+3,True,0.31313564775371716,Hypertension,"Serum uric acid, mg/dL"
+1,True,0.6267387940931085,Hypertension,"Waist circumference, cm"
+4,True,0.7636503216518157,Diabetes mellitus,Anemia (WHO)
+1,True,,"HbA1c, %","HDL cholesterol, mg/dL"
+4,True,0.907937352800752,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),Metabolic syndrome
+1,True,,"Lumbar spine BMD, g/cm2","Serum uric acid, mg/dL"
+1,True,0.310755120013431,Ever alcohol (past/current),Hepatic steatosis
+2,True,0.062116652744355544,"Serum 25(OH)D, ng/mL",Prediabetes
+1,True,,"ASM / height^2, kg/m2","LDL cholesterol, mg/dL"
+1,True,0.4150054306857624,"Low muscle mass (low ASMI, AWGS cut)","Triglycerides, mg/dL"
+2,True,1.8065970074437538,"Appendicular skeletal muscle mass, kg",Hepatic steatosis
+2,True,0.803380265948806,"Body fat, %",Diabetes mellitus
+3,True,0.5285740681323298,"Femoral neck BMD, g/cm2",Hepatic steatosis
+3,True,,"Femoral neck BMD, g/cm2","Total cholesterol, mg/dL"
+2,True,0.22829542937205477,"Femoral neck BMD, g/cm2",Insulin resistance (HOMA-IR>=2.5)
+1,True,,"Femoral neck BMD, g/cm2","LDL cholesterol, mg/dL"
+2,True,,"Triglycerides, mg/dL","Femoral neck BMD, g/cm2"
+1,True,,"Femoral neck BMD, g/cm2","Waist circumference, cm"
+1,True,,"Liver stiffness, kPa","Femoral neck BMD, g/cm2"
+2,False,,Insulin resistance (HOMA-IR>=2.5),Hepatic steatosis
+1,True,,"Liver stiffness, kPa","Serum uric acid, mg/dL"
+1,True,,"Fasting glucose, mg/dL","Serum uric acid, mg/dL"
+2,True,0.4789370741836623,"Obesity (KSSO >=25 / WHO >=30, country-specific)",Anemia (WHO)
+2,True,0.7556786274795376,Diabetes mellitus,"Appendicular skeletal muscle mass, kg"
+1,True,0.5508628421443779,Hypertension,Insulin resistance (HOMA-IR>=2.5)
+1,True,,"Femoral neck BMD, g/cm2","Serum creatinine, mg/dL"
+1,True,,"Serum 25(OH)D, ng/mL","Systolic blood pressure, mmHg"
+1,True,0.09647690761485353,"Osteoporosis (T-score<=-2.5, age>=50)","LDL cholesterol, mg/dL"
+3,True,,"Femoral neck BMD, g/cm2","HDL cholesterol, mg/dL"
+1,False,,"Liver stiffness, kPa",Hepatic steatosis
+1,True,0.12107287850661713,Hypertension,"Femoral neck BMD, g/cm2"
+1,True,0.7150523530639374,"Serum uric acid, mg/dL","Obesity (KSSO >=25 / WHO >=30, country-specific)"
+1,True,0.7126281144018534,Hypertension,"Total lean mass, kg"
+1,True,,"Serum uric acid, mg/dL","eGFR (CKD-EPI 2021), mL/min/1.73m2"
+1,True,0.609219710775342,Ever smoking (past/current),"White blood cell count, 10^3/uL"
+2,True,0.3606805255708884,Hypertriglyceridemia (NCEP TG>=150),"Serum uric acid, mg/dL"
+1,True,,"Controlled attenuation parameter, dB/m","Serum uric acid, mg/dL"
+1,True,2.0969237732820387,Abdominal obesity,Insulin resistance (HOMA-IR>=2.5)
+1,True,0.30343490063145745,"Serum 25(OH)D, ng/mL",Abdominal obesity
+1,True,0.6853030476133808,"Total fat mass, kg",Diabetes mellitus
+1,True,0.9381884864375241,"Total lean mass, kg",Diabetes mellitus
+1,True,1.0248950999333952,Hypertension,Central obesity (WHtR>=0.5)
+1,True,0.49197368096831623,"Low muscle mass (low ASMI, AWGS cut)",Prediabetes
+1,True,0.7144257819231163,Diabetes mellitus,"Body mass index, kg/m2"
+2,True,,"Age, years","Appendicular skeletal muscle mass, kg"
+1,True,0.051558977959895815,High LDL cholesterol (>=160),Vitamin D deficiency (<20 ng/mL)
+1,True,0.09895865166976872,Ever smoking (past/current),High LDL cholesterol (>=160)
+1,True,0.5836062916656547,"Osteoporosis (T-score<=-2.5, age>=50)",Waist-to-height ratio
+1,False,,"Obesity (KSSO >=25 / WHO >=30, country-specific)",MASLD
+2,True,0.844144792803664,"Liver stiffness, kPa","Obesity (KSSO >=25 / WHO >=30, country-specific)"
+2,True,,"Serum uric acid, mg/dL","Body mass index, kg/m2"
+1,True,0.09494605924341216,Vitamin D deficiency (<20 ng/mL),"HDL cholesterol, mg/dL"
+1,True,1.4669304903644769,"Osteoporosis (T-score<=-2.5, age>=50)","Obesity (KSSO >=25 / WHO >=30, country-specific)"
+1,True,0.6141247090777281,Hepatic steatosis,"Hemoglobin, g/dL"
+1,True,,"Alanine aminotransferase, IU/L","Serum uric acid, mg/dL"
+1,True,0.07273127031490607,Hypertension,"Osteoporosis (T-score<=-2.5, age>=50)"
+1,True,0.162608661763479,"Serum 25(OH)D, ng/mL",Advanced liver fibrosis (FIB-4>2.67)
+1,True,,"HbA1c, %","Body mass index, kg/m2"
+1,True,0.15060452391389312,"Serum 25(OH)D, ng/mL",Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30)
+4,True,0.5271215214349395,Diabetes mellitus,"HDL cholesterol, mg/dL"
+1,True,1.011262261803105,"Age, years",Diabetes mellitus
+1,True,,"HbA1c, %","Serum uric acid, mg/dL"
+1,False,,"HbA1c, %","Fasting glucose, mg/dL"
+1,True,0.43350250338444196,"HbA1c, %",Dyslipidemia (KSoLA composite)
+1,True,0.21212197659069776,"Alanine aminotransferase, IU/L",Diabetes mellitus
+1,True,0.31886733264517886,Ever smoking (past/current),Diabetes mellitus
+1,True,0.19728359873166476,Ever smoking (past/current),"Age, years"
+1,True,0.7925475647394222,Vitamin D deficiency (<20 ng/mL),Anemia (WHO)
+1,True,0.3207794077449465,"Serum 25(OH)D, ng/mL",MASLD
+1,True,0.50252112122915,"Body fat, %",Vitamin D deficiency (<20 ng/mL)
+1,True,0.33848683478466013,"Total fat mass, kg",Vitamin D deficiency (<20 ng/mL)
+1,True,,"Age, years","Femoral neck BMD, g/cm2"
+1,True,0.5344556594021224,Prediabetes,"Obesity (KSSO >=25 / WHO >=30, country-specific)"
+1,True,1.4729067002102183,"Total lean mass, kg",Metabolic syndrome
+1,True,0.14792669081139764,"Total fat mass, kg",Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30)
+1,True,0.7568980607008647,"Osteoporosis (T-score<=-2.5, age>=50)","Waist circumference, cm"
+3,True,0.6960616626202225,"Age, years",Metabolic syndrome
+1,True,1.8162005913756112,"Body fat, %",Hepatic steatosis
+1,True,,"Serum 25(OH)D, ng/mL","ASM / height^2, kg/m2"
+2,True,0.3710259427353818,"Age, years",Hepatic steatosis
+1,True,0.3178682202257105,Hypertension,Hepatic steatosis index (HSI)
+1,True,,"Lumbar spine BMD, g/cm2","Total cholesterol, mg/dL"
+1,False,,"Age, years",Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30)
+1,True,0.1859142578798211,Ever smoking (past/current),Advanced liver fibrosis (FIB-4>2.67)
+1,True,0.7710766608604458,"Low muscle mass (low ASMI, AWGS cut)","Fasting insulin, uIU/mL"
+1,True,0.4957603903603533,Hypertension,Advanced liver fibrosis (FIB-4>2.67)
+1,True,0.22989482237163827,Hypertension,"HbA1c, %"
+1,False,,"Low muscle mass (low ASMI, AWGS cut)","Body mass index, kg/m2"
+1,True,,"Serum 25(OH)D, ng/mL","Triglycerides, mg/dL"
+2,False,,"Low muscle mass (low ASMI, AWGS cut)","Obesity (KSSO >=25 / WHO >=30, country-specific)"
+2,True,1.9663529709333163,"Low muscle mass (low ASMI, AWGS cut)",Diabetes mellitus
+2,True,0.31708165708814734,Advanced liver fibrosis (FIB-4>2.67),Metabolic syndrome
+1,True,0.5777423176218645,MASLD,"Hemoglobin, g/dL"
+1,True,0.040109415577014064,"Liver stiffness, kPa",Ever alcohol (past/current)
+1,True,0.18150346863847297,"Osteoporosis (T-score<=-2.5, age>=50)","Serum uric acid, mg/dL"
+1,True,1.2273185002078937,"Fasting insulin, uIU/mL",Hepatic steatosis

@@ -1,0 +1,49 @@
+﻿papers,a,b,a_label,b_label,reason
+7,sarcopenia,obesity,"Low muscle mass (low ASMI, AWGS cut)","Obesity (KSSO >=25 / WHO >=30, country-specific)",same measurement family 1
+7,wc,bmi,"Waist circumference, cm","Body mass index, kg/m2",same measurement family 1
+6,steatosis,adv_fibrosis,Hepatic steatosis,Advanced liver fibrosis (FIB-4>2.67),blocked by the guard (derived-index rule)
+6,steatosis,obesity,Hepatic steatosis,"Obesity (KSSO >=25 / WHO >=30, country-specific)",blocked by the guard (derived-index rule)
+5,sarcopenia,steatosis,"Low muscle mass (low ASMI, AWGS cut)",Hepatic steatosis,blocked by the guard (derived-index rule)
+4,insulin_resistance,mets,Insulin resistance (HOMA-IR>=2.5),Metabolic syndrome,blocked by the guard (derived-index rule)
+4,obesity,overweight,"Obesity (KSSO >=25 / WHO >=30, country-specific)","Overweight (KSSO >=23 / WHO >=25, country-specific)",same measurement family 1
+4,insulin_resistance,dm,Insulin resistance (HOMA-IR>=2.5),Diabetes mellitus,same measurement family 4
+4,fat_kg,lean_kg,"Total fat mass, kg","Total lean mass, kg",same measurement family 1
+4,insulin_resistance,steatosis,Insulin resistance (HOMA-IR>=2.5),Hepatic steatosis,blocked by the guard (derived-index rule)
+3,steatosis,htn,Hepatic steatosis,Hypertension,blocked by the guard (derived-index rule)
+3,hdl,steatosis,"HDL cholesterol, mg/dL",Hepatic steatosis,definitional component
+2,mets,htn,Metabolic syndrome,Hypertension,blocked by the guard (derived-index rule)
+2,obesity,bmi,"Obesity (KSSO >=25 / WHO >=30, country-specific)","Body mass index, kg/m2",same measurement family 1
+2,anemia,hemoglobin,Anemia (WHO),"Hemoglobin, g/dL",definitional component
+2,mets,dm,Metabolic syndrome,Diabetes mellitus,blocked by the guard (derived-index rule)
+2,mets,steatosis,Metabolic syndrome,Hepatic steatosis,blocked by the guard (derived-index rule)
+2,bmi,abdominal_obesity,"Body mass index, kg/m2",Abdominal obesity,same measurement family 1
+2,hdl,mets,"HDL cholesterol, mg/dL",Metabolic syndrome,definitional component
+2,obesity,abdominal_obesity,"Obesity (KSSO >=25 / WHO >=30, country-specific)",Abdominal obesity,same measurement family 1
+2,dm,hba1c,Diabetes mellitus,"HbA1c, %",same measurement family 4
+2,steatosis,ckd,Hepatic steatosis,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),blocked by the guard (derived-index rule)
+2,bodyfat_pct,bmi,"Body fat, %","Body mass index, kg/m2",same measurement family 1
+2,lsm,steatosis,"Liver stiffness, kPa",Hepatic steatosis,definitional component
+1,wc,obesity,"Waist circumference, cm","Obesity (KSSO >=25 / WHO >=30, country-specific)",same measurement family 1
+1,sarcopenia,fat_kg,"Low muscle mass (low ASMI, AWGS cut)","Total fat mass, kg",same measurement family 1
+1,ckd,egfr,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),"eGFR (CKD-EPI 2021), mL/min/1.73m2",same measurement family 5
+1,mets,sbp,Metabolic syndrome,"Systolic blood pressure, mmHg",definitional component
+1,bodyfat_pct,lean_kg,"Body fat, %","Total lean mass, kg",same measurement family 1
+1,height,overweight,"Height, cm","Overweight (KSSO >=23 / WHO >=25, country-specific)",same measurement family 1
+1,obesity,lean_kg,"Obesity (KSSO >=25 / WHO >=30, country-specific)","Total lean mass, kg",same measurement family 1
+1,steatosis,dm,Hepatic steatosis,Diabetes mellitus,definitional component
+1,vitd,vitd_deficiency,"Serum 25(OH)D, ng/mL",Vitamin D deficiency (<20 ng/mL),definitional component
+1,height,obesity,"Height, cm","Obesity (KSSO >=25 / WHO >=30, country-specific)",same measurement family 1
+1,weight,overweight,"Weight, kg","Overweight (KSSO >=23 / WHO >=25, country-specific)",same measurement family 1
+1,bmi,overweight,"Body mass index, kg/m2","Overweight (KSSO >=23 / WHO >=25, country-specific)",same measurement family 1
+1,mets,abdominal_obesity,Metabolic syndrome,Abdominal obesity,blocked by the guard (derived-index rule)
+1,mets,prediabetes,Metabolic syndrome,Prediabetes,blocked by the guard (derived-index rule)
+1,prediabetes,glucose,Prediabetes,"Fasting glucose, mg/dL",same measurement family 4
+1,tg,mets,"Triglycerides, mg/dL",Metabolic syndrome,definitional component
+1,age,adv_fibrosis,"Age, years",Advanced liver fibrosis (FIB-4>2.67),definitional component
+1,glucose,hba1c,"Fasting glucose, mg/dL","HbA1c, %",same measurement family 4
+1,tg,steatosis,"Triglycerides, mg/dL",Hepatic steatosis,definitional component
+1,whtr,bmi,Waist-to-height ratio,"Body mass index, kg/m2",same measurement family 1
+1,age,ckd,"Age, years",Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),definitional component
+1,sarcopenia,bmi,"Low muscle mass (low ASMI, AWGS cut)","Body mass index, kg/m2",same measurement family 1
+1,obesity,masld,"Obesity (KSSO >=25 / WHO >=30, country-specific)",MASLD,blocked by the guard (derived-index rule)
+1,central_obesity,masld,Central obesity (WHtR>=0.5),MASLD,blocked by the guard (derived-index rule)

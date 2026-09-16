@@ -1,0 +1,27 @@
+﻿papers,exposure_or_outcome_a,exposure_or_outcome_b,guard_rule
+5,"Low muscle mass (low ASMI, AWGS cut)",Hepatic steatosis,derived-index rule
+4,"Fasting glucose, mg/dL",Diabetes mellitus,same measurement family 4
+4,Hepatic steatosis,"Obesity (KSSO >=25 / WHO >=30, country-specific)",derived-index rule
+3,Hepatic steatosis,Metabolic syndrome,derived-index rule
+3,Hypertension,Hepatic steatosis,derived-index rule
+2,"Overweight (KSSO >=23 / WHO >=25, country-specific)","Obesity (KSSO >=25 / WHO >=30, country-specific)",same measurement family 1
+2,Diabetes mellitus,Metabolic syndrome,derived-index rule
+2,"HbA1c, %",Diabetes mellitus,same measurement family 4
+2,Hepatic steatosis,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),derived-index rule
+2,Hepatic steatosis,Insulin resistance (HOMA-IR>=2.5),derived-index rule
+2,"Low muscle mass (low ASMI, AWGS cut)","Obesity (KSSO >=25 / WHO >=30, country-specific)",same measurement family 1
+1,Hypertension,Metabolic syndrome,derived-index rule
+1,"HDL cholesterol, mg/dL",Metabolic syndrome,definitional component
+1,"eGFR (CKD-EPI 2021), mL/min/1.73m2",Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),same measurement family 5
+1,"Waist circumference, cm","Body mass index, kg/m2",same measurement family 1
+1,Metabolic syndrome,"Systolic blood pressure, mmHg",definitional component
+1,Anemia (WHO),"Hemoglobin, g/dL",definitional component
+1,"Overweight (KSSO >=23 / WHO >=25, country-specific)","Height, cm",same measurement family 1
+1,Metabolic syndrome,Insulin resistance (HOMA-IR>=2.5),derived-index rule
+1,"Obesity (KSSO >=25 / WHO >=30, country-specific)","Height, cm",same measurement family 1
+1,Diabetes mellitus,Hepatic steatosis,definitional component
+1,Hepatic steatosis,"Liver stiffness, kPa",definitional component
+1,"Obesity (KSSO >=25 / WHO >=30, country-specific)",MASLD,derived-index rule
+1,"Fasting glucose, mg/dL","HbA1c, %",same measurement family 4
+1,"Age, years",Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),definitional component
+1,"Low muscle mass (low ASMI, AWGS cut)","Body mass index, kg/m2",same measurement family 1
