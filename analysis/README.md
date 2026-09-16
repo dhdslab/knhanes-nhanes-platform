@@ -66,3 +66,19 @@ None of this validates the definition-audit agents themselves. The comparison me
 between the released corpus and the published literature; it says nothing about the sensitivity or
 specificity with which an agent detects a definitional error. That remains open and is stated as
 such in the manuscript.
+
+## Participant flow and design degrees of freedom (Methods, Supplementary Appendix S15)
+
+| Script | Produces |
+|---|---|
+| `participant_flow.py` | Walks the same eligibility filter `build_analytic` applies, in the same order, and writes the cascade and the design degrees of freedom to `participant_flow.csv` |
+| `make_flow_diagram.py` | Supplementary Figure S8, the two-column participant flow diagram, from that CSV and the two manifests |
+
+`participant_flow.py` needs the raw survey files, which are not redistributed here;
+`participant_flow.csv` is committed so the diagram and the reported cascade can be
+checked without them.
+
+The cascade this recovers corrected a statement in the manuscript. The figures 110,239
+and 47,558 are the counts aged 20 or over, not the counts with a usable complex-survey
+design, which are 105,756 and 44,249. Below that there is no single analytic sample
+size at all, because every model is fitted on complete cases for its own variables.
