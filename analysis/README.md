@@ -10,6 +10,7 @@ where noted, query PubMed through NCBI E-utilities.
 | Script | Produces |
 |---|---|
 | `make_suppl_figs_tables.py` | Figures S1 to S4; `S11_file_inventory.csv`, `S12_outcome_summary.csv` |
+| `figstyle.py` | The house style every supplementary figure is drawn in: palette, rc parameters, panel frame, panel letters, label fitting |
 | `rebuild_suppl_data_ml.py` | Rebuilds the merged Supplementary Data S5 and S6 bundles from the individual machine-learning reports |
 
 ## Cross-survey replication (main text)
@@ -37,6 +38,7 @@ Run in this order. The first two steps query PubMed and take roughly an hour in 
 | 2 | `harvest_abstracts.py` | Abstracts for the association papers, and for the prediction papers of each of the 27 clinical outcomes |
 | 3 | `extract_and_compare.py` | Direction of association, reported effect sizes, published discrimination values. Writes `S14_direction_concordance.csv`, `S15_ml_benchmark.csv`, Figure S7 |
 | 4 | `rebuild_figs_s5_s6.py` | Figures S5 and S6 |
+| 5 | `make_fig_s7.py` | Figure S7, standalone: it reads only `S15_ml_benchmark.csv` and `_ml_regen_summary.csv`, so the figure can be redrawn without repeating the retrieval |
 
 `pubmed_terms.py` holds the query fragment for every variable. **Term choice drives every count
 in S10 and S14, so it is meant to be read and edited by a domain expert.**
@@ -82,3 +84,18 @@ The cascade this recovers corrected a statement in the manuscript. The figures 1
 and 47,558 are the counts aged 20 or over, not the counts with a usable complex-survey
 design, which are 105,756 and 44,249. Below that there is no single analytic sample
 size at all, because every model is fitted on complete cases for its own variables.
+
+## Figure style
+
+`figstyle.py` holds the whole look in one place, so a change of taste is a change in one
+file. It carries the palette of the main figures unchanged, plus two colours that an
+accessibility check forced: the salmon and the neutral grey of the main figures are 8.8
+apart in OKLab and 4.9 apart under deuteranopia, which is not a distinguishable pair, and
+they had been placed together in two figures. `PINK_DK` and `GREY_DK` separate those
+cases, and in Figure S2 the eligible-exposure bar became an outline rather than a second
+fill for the same reason.
+
+Figures carry no title inside the image, because the Supplement prints the caption
+directly beneath each one; panels are identified with a bold lower-case letter, as a
+journal does. Set `TITLES = True` in `figstyle.py` to get titles back for a standalone
+copy of a figure.

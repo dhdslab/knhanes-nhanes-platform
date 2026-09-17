@@ -5,11 +5,18 @@ The cascade numbers come from Reporting/participant_flow.csv, which participant_
 computes by walking the same filter `build_analytic` applies. The per-analysis range at
 the foot of each column comes from the two released association manifests, so every
 number in the figure can be recomputed from a file in the reader's hands.
+
+Drawn in the house style of figstyle.py: hairline rules, one weight of type, the
+column heading as plain bold text rather than a filled tab, and exclusion boxes in a
+lane that cannot collide with the other survey's column.
+
+The figure is 7.2 inches wide and each survey gets half of it, so a main box holds
+about 36 characters a line and an exclusion box about 28. Every string below is
+written to that measure; a line that overruns it is a bug, and `check_widths`
+asserts it at build time rather than leaving it to be noticed in the PDF.
 """
-import os
+import os, sys
 import pandas as pd
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
@@ -17,8 +24,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 BASE = os.path.dirname(HERE)
 ROOT = os.path.dirname(BASE)
 FIGS = os.path.join(BASE, "Figures")
-
-NAVY, GREY, TEAL = "#22405F", "#B9BEC4", "#2A9D8F"
+sys.path.insert(0, HERE)
+import figstyle as fs
 
 F = pd.read_csv(os.path.join(BASE, "Reporting", "participant_flow.csv")).set_index("survey")
 MAN = {}
@@ -27,85 +34,130 @@ for ds in ("KNHANES", "NHANES"):
     MAN[ds] = (len(m), int(m.n.min()), int(m.n.median()), int(m.n.max()))
 
 CYCLES = {"KNHANES": "18 annual cycles, 2007 to 2024",
-          "NHANES": "8 two-year cycles,\n2005-2006 through 2021-2023"}
-WHY = {"KNHANES": "no positive pooled\ninterview-and-examination weight",
-       "NHANES": "no positive pooled examination\nweight (interviewed, not examined)"}
-# spine centre, exclusion-lane centre. The two lanes never overlap, so a wide
-# exclusion box cannot collide with the other survey's column.
-GEOM = {"KNHANES": (0.155, 0.385), "NHANES": (0.650, 0.880)}
-W, XW = 0.26, 0.19
+          "NHANES": "8 two-year cycles,\n2005-2006 to 2021-2023"}
+WHY = {"KNHANES": "no pooled interview-and-\nexamination weight",
+       "NHANES": "no examination weight\n(interviewed, not examined)"}
+# spine centre, exclusion-lane centre. The lanes are laid out so that no box
+# overlaps another and neither survey's exclusion box crosses the centre rule.
+GEOM = {"KNHANES": (0.142, 0.382), "NHANES": (0.642, 0.882)}
+W, XW = 0.275, 0.200
+BODY, SMALL = 7.4, 6.9
+MAIN_CHARS, EXCL_CHARS = 36, 28
 
 
-def box(ax, x, y, w, h, text, face="white", edge=NAVY, lw=1.3, size=8.4, weight="normal"):
+def check(text, limit, where):
+    """Assert every line fits the box. `$n$` is one rendered glyph, not five, so the
+    mathtext delimiters are dropped before counting."""
+    for line in text.split("\n"):
+        width = len(line.replace("$", ""))
+        assert width <= limit, f"[{where}] {width} > {limit} chars: {line!r}"
+    return text
+
+
+def box(ax, x, y, w, h, text, fill="white", edge=fs.NAVY, lw=0.8, size=BODY,
+        color=None):
     ax.add_patch(FancyBboxPatch((x - w / 2, y - h / 2), w, h,
-                                boxstyle="round,pad=0.004,rounding_size=0.010",
-                                facecolor=face, edgecolor=edge, linewidth=lw, zorder=2))
-    ax.text(x, y, text, ha="center", va="center", fontsize=size, color="#1a1a1a",
-            zorder=3, linespacing=1.45, fontweight=weight)
+                                boxstyle="round,pad=0.003,rounding_size=0.005",
+                                facecolor=fill, edgecolor=edge, linewidth=lw, zorder=2))
+    ax.text(x, y, text, ha="center", va="center", fontsize=size, zorder=3,
+            linespacing=1.5, color=color or fs.INK)
 
 
-def arrow(ax, x, y0, y1, color=NAVY):
-    ax.add_patch(FancyArrowPatch((x, y0), (x, y1), arrowstyle="-|>", mutation_scale=11,
-                                 color=color, linewidth=1.2, zorder=2,
+def arrow(ax, x, y0, y1):
+    ax.add_patch(FancyArrowPatch((x, y0), (x, y1), arrowstyle="-|>", mutation_scale=7,
+                                 color=fs.NAVY, linewidth=0.8, zorder=2,
                                  shrinkA=0, shrinkB=0))
 
 
-def column(ax, ds):
+FIGW, FIGH = 7.2, 5.6
+PAD = 0.013          # vertical breathing room inside a box, in axes units
+TOP = 0.920          # top edge of the first box
+
+
+def height(text, size):
+    """Box height that actually holds the text: one line is `size` points at the
+    rcParam linespacing of 1.5, expressed as a fraction of the figure height."""
+    return len(text.split("\n")) * size * 1.5 / (FIGH * 72) + PAD
+
+
+def stages_for(ds):
+    """Each stage is (text, size, fill, linewidth); each gap carries the exclusion box
+    that leaves at it."""
     r = F.loc[ds]
     npairs, nmin, nmed, nmax = MAN[ds]
+    stages = [
+        ("Released records\n" + CYCLES[ds] + f"\n$n$ = {int(r.released):,}",
+         BODY, "white", 0.8),
+        (f"Aged 20 years or older\n$n$ = {int(r.aged_20_plus):,}\n"
+         "(the eligible population\nof the platform)", BODY, "white", 0.8),
+        (f"Valid complex-survey design\n$n$ = {int(r.analysed):,}\n"
+         f"{int(r.strata):,} strata, {int(r.psu):,} sampling units\n"
+         f"design degrees of freedom = {int(r.design_df):,}", BODY, "#F0F3F6", 0.8),
+        ("Analysed\nEach model uses complete cases\n"
+         "for its own variables, so there is\nno single analytic $n$. "
+         f"Per analysis:\n{nmin:,} to {nmax:,}, median {nmed:,}\n"
+         f"over {npairs:,} association analyses", SMALL, "white", 1.1),
+    ]
+    exclusions = [
+        (f"Excluded, aged under 20\n$n$ = {int(r.under_20):,}", fs.GREY),
+        (f"Excluded, incomplete design\n$n$ = {int(r.excluded_design):,}\n" + WHY[ds],
+         fs.GREY),
+        (("Pooled estimates screened\non a fixed random subsample\n"
+          "$n$ = 50,000 (Methods)", fs.TEAL) if ds == "KNHANES" else None),
+    ]
+    for i, (text, size, _, _) in enumerate(stages):
+        check(text, MAIN_CHARS, f"{ds} stage {i}")
+    for i, ex in enumerate(exclusions):
+        if ex:
+            check(ex[0], EXCL_CHARS, f"{ds} exclusion {i}")
+    return stages, exclusions
+
+
+# One shared vertical grid for both surveys, taken from the taller of the two at each
+# stage, so the rows line up across the columns and the cascade can be read across.
+ST = {ds: stages_for(ds) for ds in ("KNHANES", "NHANES")}
+HS = [max(height(ST[ds][0][i][0], ST[ds][0][i][1]) for ds in ST)
+      for i in range(len(ST["KNHANES"][0]))]
+GAPS = [max(max(height(ST[ds][1][i][0], SMALL) for ds in ST if ST[ds][1][i]) + 0.030,
+            0.062) for i in range(len(ST["KNHANES"][1]))]
+TOPS, _t = [], TOP
+for _h, _g in zip(HS, GAPS + [0]):
+    TOPS.append(_t); _t -= _h + _g
+assert _t > 0.004, f"the cascade overruns the canvas: bottom {_t:.3f}"
+
+
+def column(ax, ds):
     x0, xe = GEOM[ds]
-    # Box centres and heights are chosen so that every gap between two main boxes is
-    # taller than the exclusion box that sits in it; nothing overlaps and nothing is
-    # clipped by the axes.
-    ys = [0.855, 0.645, 0.395, 0.115]
+    stages, exclusions = ST[ds]
 
-    box(ax, x0, 0.965, W, 0.050, ds,
-        face="#EEF2F6", edge=NAVY, lw=1.6, size=11.5, weight="bold")
+    ax.text(x0, 0.975, ds, ha="center", va="center", fontsize=9.5,
+            fontweight="bold", color=fs.INK)
+    ax.plot([x0 - W / 2, x0 + W / 2], [0.950, 0.950], color=fs.NAVY, lw=1.0,
+            solid_capstyle="butt")
 
-    box(ax, x0, ys[0], W, 0.115,
-        "Released records\n" + CYCLES[ds] + f"\nn = {int(r.released):,}")
-
-    def step(y_from, y_to, halfa, halfb, excl):
-        arrow(ax, x0, y_from - halfa, y_to + halfb)
-        ym = (y_from - halfa + y_to + halfb) / 2
-        if excl is not None:
-            txt, h, edge = excl
-            ax.plot([x0, xe - XW / 2], [ym, ym], color=GREY, linewidth=1.1, zorder=1)
-            box(ax, xe, ym, XW, h, txt, face="#FAFAFA", edge=edge, lw=1.0, size=7.6)
-
-    step(ys[0], ys[1], 0.0575, 0.0725,
-         (f"Excluded, aged under 20 years\nn = {int(r.under_20):,}", 0.056, GREY))
-    box(ax, x0, ys[1], W, 0.145,
-        f"Aged 20 years or older\nn = {int(r.aged_20_plus):,}\n"
-        "(the eligible population\nof the platform)")
-
-    step(ys[1], ys[2], 0.0725, 0.0825,
-         (f"Excluded, incomplete survey design\nn = {int(r.excluded_design):,}\n" + WHY[ds],
-          0.082, GREY))
-    box(ax, x0, ys[2], W, 0.165,
-        f"Valid complex-survey design\nn = {int(r.analysed):,}\n"
-        f"{int(r.strata):,} strata, {int(r.psu):,} primary sampling units\n"
-        f"design degrees of freedom = {int(r.design_df):,}", face="#EEF2F6")
-
-    step(ys[2], ys[3], 0.0825, 0.1025,
-         ("Pooled association estimates\nscreened on a fixed random\n"
-          "subsample, n = 50,000 (Methods)", 0.072, TEAL) if ds == "KNHANES" else None)
-    box(ax, x0, ys[3], W, 0.205,
-        "Analysed\nEach model is fitted on the participants\n"
-        "with complete data for its own variables,\nso there is no single analytic n. Across\n"
-        f"the {npairs:,} association analyses of this survey\n"
-        f"the contributing n runs from {nmin:,} to\n{nmax:,}, median {nmed:,}.",
-        lw=1.6, size=8.0)
+    for i, (text, size, fill, lw) in enumerate(stages):
+        top, h = TOPS[i], HS[i]
+        box(ax, x0, top - h / 2, W, h, text, fill=fill, lw=lw, size=size)
+        if i == len(stages) - 1:
+            break
+        bottom, gap = top - h, GAPS[i]
+        arrow(ax, x0, bottom, bottom - gap)
+        ex = exclusions[i]
+        if ex:
+            eh = height(ex[0], SMALL)
+            ym = bottom - gap / 2
+            ax.plot([x0, xe - XW / 2], [ym, ym], color=fs.GREY, lw=0.7, zorder=1)
+            box(ax, xe, ym, XW, eh, ex[0], fill="#F7F8F9", edge=ex[1], lw=0.7,
+                size=SMALL, color=fs.INK2)
 
 
-fig, ax = plt.subplots(figsize=(13.6, 8.6), dpi=200)
+fig, ax = plt.subplots(figsize=(FIGW, FIGH))
 ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
 column(ax, "KNHANES")
 column(ax, "NHANES")
-ax.plot([0.5015, 0.5015], [0.015, 0.995], color="#E4E7EA", linewidth=1.0, zorder=0)
-fig.tight_layout(pad=0.4)
-p = os.path.join(FIGS, "SupplFigureS8.png")
-fig.savefig(p, facecolor="white"); plt.close(fig)
+ax.plot([0.4925, 0.4925], [0.02, 0.985], color="#EDEFF1", lw=0.8, zorder=0)
+fig.subplots_adjust(left=0.005, right=0.995, top=0.995, bottom=0.005)
+p = fs.save(fig, os.path.join(FIGS, "SupplFigureS8.png"))
 print("wrote", p)
 for ds in ("KNHANES", "NHANES"):
     r = F.loc[ds]
