@@ -1,32 +1,40 @@
 # -*- coding: utf-8 -*-
-"""Incidence/prevalence trend Word report (yearly prevalence, age-sex standardization, projection, stratification, Joinpoint APC, negative-binomial forecast)"""
+"""Incidence/prevalence trend Word report (per-cycle prevalence, age-sex standardization,
+linear projection, sex-stratified series, joinpoint APC, negative-binomial forecast)"""
 import factory_core as fc, pandas as pd, numpy as np, subprocess, io, os, json
 
-YMAP={"08":2008,"09":2009,"10":2010,"11":2011,"j":2018}
+YMAP={"08":2008,"09":2009,"10":2010,"11":2011,
+      "d":2005,"e":2007,"f":2009,"g":2011,"h":2013,"i":2015,"j":2017,"l":2021}
 def _wprev(g,outcome,w):
     s=g[[outcome,w]].dropna();
     return 100*np.average(s[outcome].astype(float),weights=s[w]) if len(s) else np.nan
 
-def build_trend_report(dataset, data_dir, years, outcome, defs, model, url, use_llm, workdir="."):
+def build_trend_report(dataset, data_dir, years, outcome, defs, model, url, use_llm, workdir=None,
+                       doc=None, summary=None):
+    workdir=os.path.abspath(workdir or os.path.dirname(os.path.abspath(__file__)))
     amin=defs["pop"]["age_min"]; frames={}
     for y in years:
         DF=fc.load_raw(dataset,data_dir,(y,)); d=fc.apply_definitions(DF,defs)
-        w="wt_tot" if "wt_tot" in d.columns else "wt_pool"
+        w="wt_pool"   # survey-weighted, consistent with the main analysis (KNHANES wt_itvex / NHANES WTMEC2YR)
         dd=d[(d.age>=amin)&d[w].notna()&(d[w]>0)&d[outcome].notna()].copy()
         dd["_w"]=dd[w]; dd["ageg"]=pd.cut(dd.age,[amin,40,50,60,70,200],right=False,
                                           labels=["<40","40-49","50-59","60-69","70+"])
         dd["stratum"]=dd.ageg.astype(str)+"_"+dd.men.astype(str); frames[y]=dd
-    alld=pd.concat(frames.values()); refw=alld.groupby("stratum")["_w"].sum(); refw/=refw.sum()
+    # drop cycles with no data for this outcome (e.g., a lab/exam not run that cycle)
+    years=[y for y in years if len(frames.get(y,[]))>0]
+    if len(years)<2:
+        raise RuntimeError(f"{outcome}: fewer than 2 survey cycles have data (cannot compute a trend).")
+    alld=pd.concat([frames[y] for y in years]); refw=alld.groupby("stratum")["_w"].sum(); refw/=refw.sum()
     rows=[]
     for y in years:
-        dd=frames[y]; yr=YMAP.get(y,int("20"+y))
+        dd=frames[y]; yr=YMAP.get(y); yr=yr if yr is not None else int("20"+y)
         sp=dd.groupby("stratum").apply(lambda g:_wprev(g,outcome,"_w"))
         std=np.nansum([refw.get(s,0)*sp.get(s,np.nan) for s in refw.index])
         rows.append({"year":yr,"N":len(dd),"count":int(round(dd[outcome].sum())),
                      "crude":_wprev(dd,outcome,"_w"),"standardized":std,
                      "men":_wprev(dd[dd.men==1],outcome,"_w"),"women":_wprev(dd[dd.men==0],outcome,"_w")})
     T=pd.DataFrame(rows).sort_values("year").reset_index(drop=True)
-    # Linear projection (based on standardized rate, +3 years, regression prediction interval)
+    # linear projection of the standardized rate, +3 years, with a 95% regression prediction interval
     x=T.year.values; yme=T.standardized.values; n=len(x)
     b1,b0=np.polyfit(x,yme,1); yhat=b0+b1*x; sse=np.sum((yme-yhat)**2); se=np.sqrt(sse/max(n-2,1))
     fut=np.arange(x.max()+1,x.max()+4)
@@ -36,36 +44,45 @@ def build_trend_report(dataset, data_dir, years, outcome, defs, model, url, use_
         yf=b0+b1*xf; pm=se*np.sqrt(1+1/n+(xf-xm)**2/sxx)
         proj.append({"year":int(xf),"forecast":round(yf,2),"lo95":round(yf-1.96*pm,2),"hi95":round(yf+1.96*pm,2)})
     proj=pd.DataFrame(proj)
-    # trend.R (NB forecast + APC bootstrap)
+    # trend.R (NB forecast + bootstrap APC)
     T[["year","count","N","standardized"]].rename(columns={"standardized":"rate"}).to_csv(os.path.join(workdir,"trend_series.csv"),index=False)
     json.dump({"future":fut.tolist()},open(os.path.join(workdir,"trend_config.json"),"w"))
-    r=subprocess.run([fc.rscript_cmd(),"trend.R"],cwd=workdir,capture_output=True,text=True,env=fc.r_env(workdir))
+    r=subprocess.run([fc._rscript(),"trend.R"],cwd=workdir,capture_output=True,text=True,errors="replace")
     if r.returncode!=0: raise RuntimeError(r.stderr)
     nb=pd.read_csv(os.path.join(workdir,"trend_nb.csv")); apc=pd.read_csv(os.path.join(workdir,"trend_apc.csv"))
-    # Figure
+    # figure
     import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
     fig,ax=plt.subplots(figsize=(7,4))
     ax.plot(T.year,T.crude,"o-",label="Crude",color="#245")
     ax.plot(T.year,T.standardized,"s-",label="Age-sex standardized",color="#0F6E56")
-    ax.plot(proj.year,proj.forecast,"^--",label="Projection",color="#A32D2D")
+    ax.plot(proj.year,proj.forecast,"^--",label="Projection (linear)",color="#A32D2D")
     ax.fill_between(proj.year,proj.lo95,proj.hi95,color="#A32D2D",alpha=0.15)
+    ax.plot(nb.year,nb.NB_forecast,"D:",label="NB forecast",color="#7A3FA0")
+    ax.fill_between(nb.year,nb.lo95,nb.hi95,color="#7A3FA0",alpha=0.12)
     ax.set_xlabel("Year"); ax.set_ylabel(f"{fc.lab(outcome)} prevalence, %"); ax.legend(fontsize=8); ax.grid(alpha=.3)
     fig.tight_layout(); bio=io.BytesIO(); fig.savefig(bio,format="png",dpi=110,bbox_inches="tight"); bio.seek(0); plt.close(fig)
-    # Interpretation
-    a=apc.iloc[0]; facts=f"{fc.lab(outcome)} annual percent change {a.APC_pct}% (95% CI {a.lo95} to {a.hi95})."
+    # interpretation
+    a=apc.iloc[-1]; facts=f"{fc.lab(outcome)} annual percent change {a.APC_pct}% (95% CI {a.lo95} to {a.hi95}) in the latest segment {a.period}."
     interp=""
     if use_llm:
         # report-writer agent; fc.llm_prose enforces the numeric guard and falls back below
-        interp=fc.llm_prose("Write the temporal-trend results as journal prose.",
+        interp=fc.llm_prose("Write the temporal-trend results as English paper sentences.",
                             facts, model, url)
     if not interp:
         d_="increase" if a.APC_pct>0 else "decrease"
         interp=(f"The age-sex standardized prevalence of {fc.lab(outcome)} showed an annual percent change of "
-                f"{a.APC_pct}% (95% CI {a.lo95} to {a.hi95}) over the study period.")
-    # -- docx --
+                f"{a.APC_pct}% (95% CI {a.lo95} to {a.hi95}) in the latest segment.")
+    if summary is not None:
+        summary['trend']={'outcome':outcome,'apc':float(a.APC_pct),'apc_lo':float(a.lo95),'apc_hi':float(a.hi95),
+                          'period':str(a.period),'y0':int(T.year.min()),'y1':int(T.year.max()),
+                          'prev0':float(T.standardized.iloc[0]),'prev1':float(T.standardized.iloc[-1]),
+                          'n_cycles':len(years),'interp':interp}
+    # ── docx ──
     from docx import Document; from docx.shared import Inches
-    doc=Document(); doc.add_heading("Incidence/Prevalence Trend Report",0)
-    doc.add_paragraph(f"{fc.lab(outcome)} - {dataset} - {int(T.year.min())}-{int(T.year.max())} - survey-weighted")
+    own = doc is None
+    if own: doc=Document()
+    doc.add_heading("Incidence/Prevalence Trend Report", 0 if own else 1)
+    doc.add_paragraph(f"{fc.lab(outcome)} · {dataset} · {int(T.year.min())}-{int(T.year.max())} · survey-weighted")
     doc.add_heading("Figure. Incidence/prevalence trend",1)
     doc.add_picture(bio,width=Inches(6.0))
     def add_tab(title,df):
@@ -74,12 +91,13 @@ def build_trend_report(dataset, data_dir, years, outcome, defs, model, url, use_
         for _,row in df.iterrows():
             cc=tb.add_row().cells
             for j,c in enumerate(cols): cc[j].text=(f"{row[c]:.2f}" if isinstance(row[c],float) else str(row[c]))
-    add_tab("Counts per period (period, count)", T[["year","count"]].rename(columns={"year":"period"}))
+    add_tab("Counts by period", T[["year","count"]].rename(columns={"year":"period"}))
     add_tab("Crude and age-sex standardized rate (%)", T[["year","crude","standardized"]])
-    add_tab("Projection (linear forecast, standardized rate)", proj)
-    add_tab("Stratified trend -- by sex (%)", T[["year","men","women"]])
-    add_tab("Joinpoint regression -- APC (%) + bootstrap 95% CI", apc.rename(columns={"APC_pct":"APC(%)"}))
+    add_tab("Projection (linear, standardized rate)", proj)
+    add_tab("Stratified trend by sex (%)", T[["year","men","women"]])
+    add_tab("Joinpoint regression — segment APC (%) with bootstrap 95% CI", apc.rename(columns={"APC_pct":"APC(%)"}))
     add_tab("Negative binomial (NB) forecast (%)", nb)
     doc.add_heading("Interpretation",1); doc.add_paragraph(interp)
-    if len(years)<5: doc.add_paragraph(f"Note: only {len(years)} time points used. Adding more cycles will stabilize the trend and Joinpoint estimates.")
+    if len(years)<5: doc.add_paragraph(f"Note: only {len(years)} time points were available. Adding more survey cycles stabilizes the trend and joinpoint estimates.")
+    if not own: return doc
     buf=io.BytesIO(); doc.save(buf); return buf.getvalue()

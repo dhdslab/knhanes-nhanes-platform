@@ -30,7 +30,7 @@ with st.sidebar:
     have_ollama = rc.ollama_available()
     use_llm = st.checkbox("Write a synthesized answer (needs Ollama)", value=have_ollama,
                           help="If off, the exact report excerpts are shown verbatim.")
-    model = st.text_input("Ollama model", os.environ.get("LOCAL_LLM_MODEL", "llama3.2"))
+    model = st.text_input("Ollama model", os.environ.get("LOCAL_LLM_MODEL", "llama3.3:70b"))
     st.caption("Ollama detected" if have_ollama else "Ollama not detected - showing report excerpts")
 
 if not os.path.exists(os.path.join(index_dir, "meta.json")):

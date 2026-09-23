@@ -1,46 +1,24 @@
-suppressMessages({
-  library(jsonlite)
-  library(MASS)
-})
-
-series <- read.csv("trend_series.csv", check.names = FALSE)
-cfg <- fromJSON("trend_config.json")
-future <- as.integer(cfg$future)
-
-apc <- NA_real_
-lo <- NA_real_
-hi <- NA_real_
-if (nrow(series) >= 2 && all(series$rate > 0, na.rm = TRUE)) {
-  fit <- lm(log(rate) ~ year, data = series)
-  b <- coef(summary(fit))["year", "Estimate"]
-  se <- coef(summary(fit))["year", "Std. Error"]
-  apc <- (exp(b) - 1) * 100
-  lo <- (exp(b - 1.96 * se) - 1) * 100
-  hi <- (exp(b + 1.96 * se) - 1) * 100
-}
-
-write.csv(
-  data.frame(APC_pct = round(apc, 2), lo95 = round(lo, 2), hi95 = round(hi, 2)),
-  "trend_apc.csv",
-  row.names = FALSE
-)
-
-nb_out <- data.frame(year = future, forecast = NA_real_, lo95 = NA_real_, hi95 = NA_real_)
-if (nrow(series) >= 2 && all(series$N > 0, na.rm = TRUE)) {
-  fit <- tryCatch(
-    glm.nb(count ~ year + offset(log(N)), data = series),
-    error = function(e) glm(count ~ year + offset(log(N)), data = series, family = poisson())
-  )
-  nd <- data.frame(year = future, N = round(mean(series$N, na.rm = TRUE)))
-  pred <- predict(fit, newdata = nd, type = "link", se.fit = TRUE)
-  rate <- exp(pred$fit) * 100
-  nb_out <- data.frame(
-    year = future,
-    forecast = round(rate, 2),
-    lo95 = round(exp(pred$fit - 1.96 * pred$se.fit) * 100, 2),
-    hi95 = round(exp(pred$fit + 1.96 * pred$se.fit) * 100, 2)
-  )
-}
-
-write.csv(nb_out, "trend_nb.csv", row.names = FALSE)
+suppressMessages({library(MASS); library(jsonlite)})
+cfg<-fromJSON("trend_config.json"); d<-read.csv("trend_series.csv")   # year,count,N,rate
+yr<-d$year; cnt<-d$count; off<-log(d$N); fut<-cfg$future
+## Negative-binomial forecast (Poisson if glm.nb fails): fitted rate with a 95% CI from se.fit
+nb<-tryCatch(glm.nb(cnt~yr+offset(off)),error=function(e)NULL); if(is.null(nb)) nb<-glm(cnt~yr+offset(off),family=poisson)
+nd<-data.frame(yr=fut, off=log(rep(mean(d$N),length(fut))))
+pr<-predict(nb,newdata=nd,type="link",se.fit=TRUE)
+write.csv(data.frame(year=fut,NB_forecast=round(exp(pr$fit-nd$off)*100,2),
+  lo95=round(exp(pr$fit-nd$off-1.96*pr$se.fit)*100,2),hi95=round(exp(pr$fit-nd$off+1.96*pr$se.fit)*100,2)),"trend_nb.csv",row.names=FALSE)
+## Joinpoint: with >= 5 cycles one change point (two segments) at the minimum combined SSE,
+## otherwise one segment; APC per segment with a percentile bootstrap CI (B = 2000, seed 1)
+lr<-log(d$rate); n<-length(yr)
+apc_of<-function(idx){ff<-lm(lr[idx]~yr[idx]); as.numeric((exp(coef(ff)[2])-1)*100)}
+if(n>=5){best<-Inf;bj<-NA
+  for(k in 2:(n-2)){f1<-lm(lr[1:k]~yr[1:k]);f2<-lm(lr[k:n]~yr[k:n]);sse<-sum(residuals(f1)^2)+sum(residuals(f2)^2)
+    if(is.finite(sse)&&sse<best){best<-sse;bj<-k}}
+  segs<-list(1:bj, bj:n)} else segs<-list(1:n)
+set.seed(1);B<-2000; seg<-data.frame()
+for(si in seq_along(segs)){idx<-segs[[si]]; apc<-apc_of(idx)
+  bs<-replicate(B,{s<-sample(idx,replace=TRUE); if(length(unique(yr[s]))<2) NA else {ff<-lm(lr[s]~yr[s]);as.numeric((exp(coef(ff)[2])-1)*100)}})
+  ci<-quantile(bs,c(.025,.975),na.rm=TRUE)
+  seg<-rbind(seg,data.frame(segment=si,period=paste0(min(yr[idx]),"-",max(yr[idx])),APC_pct=round(apc,2),lo95=round(ci[1],2),hi95=round(ci[2],2)))}
+write.csv(seg,"trend_apc.csv",row.names=FALSE)
 cat("trend.R OK\n")

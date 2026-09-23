@@ -1,4 +1,5 @@
-pkgs <- c("survey", "jsonlite", "rms", "MASS", "sandwich")
+# splines ships with base R
+pkgs <- c("survey", "jsonlite", "MASS", "survival")
 repos <- "https://cloud.r-project.org"
 
 user_lib <- Sys.getenv("R_LIBS_USER")

@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 if (-not $env:LOCAL_LLM_MODEL) {
-    $env:LOCAL_LLM_MODEL = "llama3.2:latest"
+    $env:LOCAL_LLM_MODEL = "llama3.3:70b"
 }
 
 if (-not $env:LOCAL_LLM_URL) {

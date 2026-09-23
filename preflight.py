@@ -29,6 +29,8 @@ REQUIRED_APP_FILES = [
     "epi_report.py",
     "trend_report.py",
     "ml_report.py",
+    "full_report.py",
+    "suppl_generator.py",
     "local_llm.py",
 ]
 
@@ -36,12 +38,13 @@ REQUIRED_R_FILES = [
     "engine.R",
     "epi.R",
     "epi_adv.R",
+    "epi_surv.R",
     "trend.R",
 ]
 
 DATA_REQUIREMENTS = {
     "KNHANES": ("data/KNHANES", ["hn08_all.sas7bdat", "hn08_dxa.sas7bdat"]),
-    "NHANES": ("data/NHANES", ["demo_j.sas7bdat", "bmx_j.sas7bdat", "lux_j.sas7bdat"]),
+    "NHANES": ("data/NHANES", ["DEMO_J.XPT", "BMX_J.XPT", "LUX_J.XPT"]),
 }
 
 
@@ -93,9 +96,10 @@ def main() -> int:
 
     for dataset, (folder, examples) in DATA_REQUIREMENTS.items():
         data_dir = root / folder
-        found = list(data_dir.rglob("*.sas7bdat")) if data_dir.exists() else []
+        found = ([p for p in data_dir.rglob("*") if p.suffix.lower() in (".sas7bdat", ".xpt")]
+                 if data_dir.exists() else [])
         if found:
-            ok(f"{dataset} data files: {len(found)} sas7bdat file(s) under {folder}")
+            ok(f"{dataset} data files: {len(found)} file(s) under {folder}")
         else:
             warn(
                 f"{dataset} data not found under {folder}. "
