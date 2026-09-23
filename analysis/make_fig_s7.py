@@ -8,7 +8,7 @@ It reads the two files that retrieval already produced:
   _src/S15_ml_benchmark.csv                 every published auROC / C-statistic /
                                             concordance index extracted, one row
                                             per value (outcome, pmid, year, auc)
-  knhanes_platform/_ml_regen_summary.csv    the corpus models, one row per
+  _ml_regen_summary.csv (repository root)    the corpus models, one row per
                                             outcome and survey
 
 The comparison is between a published value and the corpus value for the same
@@ -23,16 +23,17 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BASE = os.path.dirname(HERE)
-ROOT = os.path.dirname(BASE)
+ROOT = os.path.dirname(HERE)                  # repository root: platform code and suppl/
+BASE = os.path.join(HERE, "out")              # figures and merged bundles are written here
 FIGS = os.path.join(BASE, "Figures")
+os.makedirs(FIGS, exist_ok=True)
 sys.path.insert(0, HERE)
-sys.path.insert(0, os.path.join(ROOT, "knhanes_platform"))
+sys.path.insert(0, ROOT)
 import figstyle as fs
 import factory_core as fc
 
 AUCS = pd.read_csv(os.path.join(HERE, "S15_ml_benchmark.csv"))
-R = pd.read_csv(os.path.join(ROOT, "knhanes_platform", "_ml_regen_summary.csv"))
+R = pd.read_csv(os.path.join(ROOT, "_ml_regen_summary.csv"))
 MIN_PUB = 3          # an outcome needs at least this many published values to appear
 
 

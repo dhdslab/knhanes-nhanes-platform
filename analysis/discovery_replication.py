@@ -13,7 +13,7 @@ directions and puts a cluster-bootstrap CI on the correlation.
 import numpy as np, pandas as pd, os
 from scipy.stats import pearsonr, spearmanr
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # repository root
 K = pd.read_csv(os.path.join(ROOT, "suppl", "_manifest_association_KNHANES.csv"))
 N = pd.read_csv(os.path.join(ROOT, "suppl", "_manifest_association_NHANES.csv"))
 

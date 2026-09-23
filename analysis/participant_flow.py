@@ -23,19 +23,19 @@ the number of strata, counting primary sampling units as distinct (stratum, unit
 because the design object is built with nest = TRUE and the NHANES unit code is only
 unique within its stratum.
 
-Output: Reporting/participant_flow.csv, and the numbers printed for transcription.
+Output: analysis/participant_flow.csv, and the numbers printed for transcription.
 """
 import os, sys
 import pandas as pd
 
-PLAT = r"C:\Users\IMDL\Desktop\NHANES 부수기\knhanes_platform"
+HERE = os.path.dirname(os.path.abspath(__file__))
+PLAT = os.path.dirname(HERE)                  # repository root; raw files in data/
 sys.path.insert(0, PLAT)
 os.chdir(PLAT)
 import factory_core as fc                                    # noqa: E402
 from suppl_generator import DATA, DEFS, AGE                   # noqa: E402
 
-OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                   "Reporting", "participant_flow.csv")
+OUT = os.path.join(HERE, "participant_flow.csv")
 
 rows = []
 for ds in ["KNHANES", "NHANES"]:

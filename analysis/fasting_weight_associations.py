@@ -8,7 +8,8 @@ weight. Same exposures, same adjustment sets, same engine.
 import os, sys, glob
 import numpy as np, pandas as pd, pyreadstat
 
-PROJ = r"c:\Users\IMDL\Desktop\NHANES 부수기\knhanes_platform"
+HERE = os.path.dirname(os.path.abspath(__file__))
+PROJ = os.path.dirname(HERE)                  # repository root; raw files in data/NHANES
 sys.path.insert(0, PROJ); os.chdir(PROJ)
 import factory_core as fc
 
@@ -75,6 +76,5 @@ print(f"90th percentile |% change|          : {np.percentile(OR.pchg.abs(),90):.
 print(f"max |% change|                      : {OR.pchg.abs().max():.2f}%")
 agree = ((OR.p_mec < 0.05) == (OR.p_saf < 0.05)).mean()
 print(f"nominal significance agreement      : {100*agree:.1f}%")
-out = os.path.join(r"c:\Users\IMDL\Desktop\NHANES 부수기\최종본\_src",
-                   "fasting_weight_associations.csv")
+out = os.path.join(HERE, "fasting_weight_associations.csv")
 M.to_csv(out, index=False, encoding="utf-8-sig"); print("\nwrote", out)
