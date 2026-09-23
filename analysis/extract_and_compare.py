@@ -25,10 +25,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BASE = os.path.dirname(HERE)
-ROOT = os.path.dirname(BASE)
+ROOT = os.path.dirname(HERE)                  # repository root: platform code and suppl/
+BASE = os.path.join(HERE, "out")              # figures and merged bundles are written here
 FIGS = os.path.join(BASE, "Figures")
-sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(ROOT, "knhanes_platform"))
+os.makedirs(FIGS, exist_ok=True)
+sys.path.insert(0, HERE); sys.path.insert(0, ROOT)
 import pubmed_terms as PT
 import factory_core as fc
 
@@ -175,7 +176,7 @@ def build():
             rows.append(dict(outcome=r.outcome, pmid=str(r.pmid), year=r.year, auc=v,
                              title=r.title))
     AUCS = pd.DataFrame(rows).drop_duplicates(["outcome", "pmid", "auc"])
-    R = pd.read_csv(os.path.join(ROOT, "knhanes_platform", "_ml_regen_summary.csv"))
+    R = pd.read_csv(os.path.join(ROOT, "_ml_regen_summary.csv"))
     AUCS.to_csv(os.path.join(HERE, "S15_ml_benchmark.csv"), index=False, encoding="utf-8-sig")
     return D, AUCS, R
 

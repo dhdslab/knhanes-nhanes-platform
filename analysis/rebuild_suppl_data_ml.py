@@ -17,9 +17,10 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docxcompose.composer import Composer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BASE = os.path.dirname(HERE)
-ROOT = os.path.dirname(BASE)
-OUT = os.path.join(BASE, "Suppl")
+ROOT = os.path.dirname(HERE)                  # repository root: suppl/ lives here
+BASE = os.path.join(HERE, "out")
+OUT = os.path.join(BASE, "Suppl")             # merged bundles are written here
+os.makedirs(OUT, exist_ok=True)
 
 BUNDLES = [
     ("Supplementary_Data_S5.docx", "KNHANES",

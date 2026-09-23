@@ -20,8 +20,8 @@ import os, sys, re, json, time, urllib.request, urllib.parse, collections
 import numpy as np, pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(ROOT, "knhanes_platform"))
+ROOT = os.path.dirname(HERE)   # repository root
+sys.path.insert(0, HERE); sys.path.insert(0, ROOT)
 import pubmed_terms as PT
 import factory_core as fc
 

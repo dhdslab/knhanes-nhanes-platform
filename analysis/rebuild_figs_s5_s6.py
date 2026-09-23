@@ -33,11 +33,12 @@ from matplotlib.patches import Patch, Rectangle
 from matplotlib.colors import LinearSegmentedColormap
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BASE = os.path.dirname(HERE)
-ROOT = os.path.dirname(BASE)
+ROOT = os.path.dirname(HERE)                  # repository root: platform code and suppl/
+BASE = os.path.join(HERE, "out")              # figures and merged bundles are written here
 FIGS = os.path.join(BASE, "Figures")
+os.makedirs(FIGS, exist_ok=True)
 sys.path.insert(0, HERE)
-sys.path.insert(0, os.path.join(ROOT, "knhanes_platform"))
+sys.path.insert(0, ROOT)
 import figstyle as fs
 import factory_core as fc
 

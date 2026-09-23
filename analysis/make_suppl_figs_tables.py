@@ -23,11 +23,12 @@ from matplotlib.patches import Patch
 from scipy.stats import pearsonr
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BASE = os.path.dirname(HERE)
-ROOT = os.path.dirname(BASE)
+ROOT = os.path.dirname(HERE)                  # repository root: platform code and suppl/
+BASE = os.path.join(HERE, "out")              # figures and merged bundles are written here
 FIGS = os.path.join(BASE, "Figures")
+os.makedirs(FIGS, exist_ok=True)
 sys.path.insert(0, HERE)
-sys.path.insert(0, os.path.join(ROOT, "knhanes_platform"))
+sys.path.insert(0, ROOT)
 import figstyle as fs
 import factory_core as fc
 
@@ -270,6 +271,10 @@ def table_s11():
                          tables=f"{len(d.tables):,}", size_mb=f"{os.path.getsize(p)/1e6:.1f}",
                          md5=md5(p)[:12]))
         print(f"  {fn}: {len(d.tables)} tables")
+    if not rows:
+        # the merged bundles are journal files, not part of the repository: keep the committed table
+        print(f"  no bundles in {os.path.join(BASE, 'Suppl')}; S11_file_inventory.csv left as is")
+        return pd.read_csv(os.path.join(HERE, "S11_file_inventory.csv"))
     T = pd.DataFrame(rows)
     T.to_csv(os.path.join(HERE, "S11_file_inventory.csv"), index=False, encoding="utf-8-sig")
     return T

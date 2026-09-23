@@ -1,0 +1,11 @@
+{
+  "query_date": "2026-09-23",
+  "queries": {
+    "NHANES": "NHANES[tiab] OR (\"National Health and Nutrition Examination Survey\"[tiab] NOT (KNHANES[tiab] OR \"Korea National Health and Nutrition Examination Survey\"[tiab] OR \"Korean National Health and Nutrition Examination Survey\"[tiab]))",
+    "KNHANES": "KNHANES[tiab] OR \"Korea National Health and Nutrition Examination Survey\"[tiab] OR \"Korean National Health and Nutrition Examination Survey\"[tiab]",
+    "union": "(NHANES[tiab] OR (\"National Health and Nutrition Examination Survey\"[tiab] NOT (KNHANES[tiab] OR \"Korea National Health and Nutrition Examination Survey\"[tiab] OR \"Korean National Health and Nutrition Examination Survey\"[tiab]))) OR (KNHANES[tiab] OR \"Korea National Health and Nutrition Examination Survey\"[tiab] OR \"Korean National Health and Nutrition Examination Survey\"[tiab])",
+    "both": "(NHANES[tiab] OR (\"National Health and Nutrition Examination Survey\"[tiab] NOT (KNHANES[tiab] OR \"Korea National Health and Nutrition Examination Survey\"[tiab] OR \"Korean National Health and Nutrition Examination Survey\"[tiab]))) AND (KNHANES[tiab] OR \"Korea National Health and Nutrition Examination Survey\"[tiab] OR \"Korean National Health and Nutrition Examination Survey\"[tiab])",
+    "NHANES_published": "NHANES[tiab] OR \"National Health and Nutrition Examination Survey\"[tiab]"
+  },
+  "window": "2003 to 2026 by [dp]; 2026 partial to the query date"
+}

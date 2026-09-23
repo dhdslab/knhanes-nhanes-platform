@@ -21,13 +21,14 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BASE = os.path.dirname(HERE)
-ROOT = os.path.dirname(BASE)
+ROOT = os.path.dirname(HERE)                  # repository root: platform code and suppl/
+BASE = os.path.join(HERE, "out")              # figures and merged bundles are written here
 FIGS = os.path.join(BASE, "Figures")
+os.makedirs(FIGS, exist_ok=True)
 sys.path.insert(0, HERE)
 import figstyle as fs
 
-F = pd.read_csv(os.path.join(BASE, "Reporting", "participant_flow.csv")).set_index("survey")
+F = pd.read_csv(os.path.join(HERE, "participant_flow.csv")).set_index("survey")
 MAN = {}
 for ds in ("KNHANES", "NHANES"):
     m = pd.read_csv(os.path.join(ROOT, "suppl", f"_manifest_association_{ds}.csv"))

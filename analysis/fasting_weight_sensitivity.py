@@ -16,7 +16,8 @@ the effect of restricting to the fasting subsample:
 import os, sys, glob, re
 import numpy as np, pandas as pd, pyreadstat
 
-PROJ = r"c:\Users\IMDL\Desktop\NHANES 부수기\knhanes_platform"
+HERE = os.path.dirname(os.path.abspath(__file__))
+PROJ = os.path.dirname(HERE)                  # repository root; raw files in data/NHANES
 sys.path.insert(0, PROJ); os.chdir(PROJ)
 import factory_core as fc
 
@@ -79,7 +80,6 @@ print(f"\nmedian |(3)-(1)| = {R.diff_saf_minus_published.abs().median():.2f} pp,
       f"  max = {R.diff_saf_minus_published.abs().max():.2f} pp")
 print(f"median |(3)-(2)| = {R.diff_saf_minus_mec.abs().median():.2f} pp,"
       f"  max = {R.diff_saf_minus_mec.abs().max():.2f} pp   (pure weight effect)")
-out = os.path.join(r"c:\Users\IMDL\Desktop\NHANES 부수기\최종본\_src",
-                   "fasting_weight_sensitivity.csv")
+out = os.path.join(HERE, "fasting_weight_sensitivity.csv")
 R.to_csv(out, index=False, encoding="utf-8-sig")
 print("\nwrote", out)
