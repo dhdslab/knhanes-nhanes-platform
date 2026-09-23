@@ -18,7 +18,7 @@ if __name__ == "__main__":
     ap.add_argument("--type", dest="rtype", choices=["association", "trend", "ml"],
                     help="restrict to a report type")
     ap.add_argument("--no-llm", action="store_true", help="force extractive answer (no Ollama)")
-    ap.add_argument("--model", default="llama3.2", help="Ollama chat model to write the answer")
+    ap.add_argument("--model", default="llama3.3:70b", help="Ollama chat model to write the answer")
     a = ap.parse_args()
     q = " ".join(a.question)
     ix = rc.Index(a.index)

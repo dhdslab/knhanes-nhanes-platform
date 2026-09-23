@@ -7,4 +7,4 @@ pandas>=2.0
 streamlit>=1.30
 requests>=2.31
 # Optional: semantic search + written answers via a local Ollama server
-#   install Ollama from https://ollama.com, then:  ollama pull bge-m3 && ollama pull llama3.2
+#   install Ollama from https://ollama.com, then:  ollama pull bge-m3 && ollama pull llama3.3:70b

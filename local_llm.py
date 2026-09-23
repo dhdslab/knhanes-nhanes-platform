@@ -15,7 +15,7 @@ import urllib.request
 from typing import Any
 
 
-DEFAULT_MODEL = os.getenv("LOCAL_LLM_MODEL", "llama3.2:latest")
+DEFAULT_MODEL = os.getenv("LOCAL_LLM_MODEL", "llama3.3:70b")
 DEFAULT_URL = os.getenv("LOCAL_LLM_URL", "http://localhost:11434")
 DEFAULT_TIMEOUT = float(os.getenv("LOCAL_LLM_TIMEOUT", "300"))
 

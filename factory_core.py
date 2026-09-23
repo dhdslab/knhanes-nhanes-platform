@@ -641,10 +641,10 @@ def _derive_knhanes(DF, de, nc):
     pre=_mk(((d.glucose>=100)&(d.glucose<126))|((d.hba1c>=5.7)&(d.hba1c<6.5)), d.glucose.notna()|d.hba1c.notna())
     pre[d["dm"]==1]=0; d["prediabetes"]=pre
     d["hsi"]=_hsi(d.alt,d.ast,d.bmi,female,dm_pos)
-    # HTN: BP or current antihypertensive. DI1_2 (혈압조절제 복용) 1-4=taking / 5=no / 8=N/A.
+    # HTN: BP or current antihypertensive. DI1_2 (taking antihypertensive medication) 1-4=taking / 5=no / 8=N/A.
     # HE_HPdr was "medication ON exam day", not current treatment -> not used.
     hp_med=_num(d,"DI1_2").isin([1,2,3,4])
-    lip_med=_num(d,"DI2_2").isin([1,2,3,4])   # 이상지질혈증 약복용 (current lipid-lowering treatment)
+    lip_med=_num(d,"DI2_2").isin([1,2,3,4])   # DI2_2 taking dyslipidaemia medication (current lipid-lowering treatment)
     htn_pos=pd.Series(False,index=d.index)
     if de["htn"].get("SBP >=140 or DBP >=90 mmHg"): htn_pos|=(d.sbp>=140)|(d.dbp>=90)
     if de["htn"].get("Current antihypertensive"): htn_pos|=hp_med
@@ -693,7 +693,7 @@ def _derive_knhanes(DF, de, nc):
     d["inc3"]=q.map({1:"Low",2:"Low",3:"Middle",4:"High",5:"High"})
     # survey design — wt_itvex (health-interview + examination linked weight) is the standard
     # integrated weight covering all cycles; wt_ex1 is a small fasting subsample weight (missing in 2010).
-    # current pregnancy: HE_prg (임신여부, exam) or N_PRG (임신·수유 여부, ==1 pregnant)
+    # current pregnancy: HE_prg (pregnancy status, examination) or N_PRG (pregnancy/lactation status, ==1 pregnant)
     d["pregnant"]=(pd.to_numeric(d.get("HE_prg"),errors="coerce")==1)|(pd.to_numeric(d.get("N_PRG"),errors="coerce")==1)
     wcol=next((c for c in ["wt_itvex","wt_tot","wt_ex1"] if c in d.columns), None)
     d["wt_pool"]=(pd.to_numeric(d[wcol],errors="coerce")/max(nc,1)) if wcol else np.nan
@@ -1120,6 +1120,8 @@ def nl_to_config(question, dataset, model, url, use_llm):
             if e and oo: return {"exposures":e,"outcomes":oo,"covariates":auto_covariates(dataset,e,oo)}
         except Exception: pass
     q=question.lower()
+    # keyword fallback for questions typed in Korean or English (the Korean keys are input
+    # vocabulary: fatty liver, diabetes, prediabetes, hypertension, metabolic syndrome, ...)
     kw={"지방간":"steatosis","masld":"masld","당뇨":"dm","전단계":"prediabetes","고혈압":"htn","대사증후군":"mets",
         "이상지질":"dyslipidemia","콩팥":"ckd","신장":"ckd","섬유화":"adv_fibrosis","빈혈":"anemia",
         "비만":"obesity","복부":"abdominal_obesity","근육":"asm_pct","체지방":"bodyfat_pct",

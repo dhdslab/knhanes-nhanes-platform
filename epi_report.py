@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Epidemiology Word report (Table1+SMD, crude/adjusted OR, overall risk, subgroups+P-interaction, forest, E-value)"""
+"""Epidemiology Word report (Table 1 + SMD, crude/adjusted OR, overall risk,
+subgroups + P-interaction, forest plot, E-value)"""
 import factory_core as fc
 import pandas as pd, numpy as np, json, subprocess, os, io
 
@@ -35,18 +36,21 @@ def _forest(adj,labels):
     ax.axvline(1,color="#999",ls="--"); ax.set_yticks(y); ax.set_yticklabels(a.name,fontsize=8)
     ax.set_xscale("log"); ax.set_xlabel("Adjusted OR (95% CI)"); ax.invert_yaxis(); fig.tight_layout(); return fig
 
-def build_epi_report(dataset, DF, outcome, main_exposure, covariates, subgroups, defs, model, url, use_llm, workdir="."):
+def build_epi_report(dataset, DF, outcome, main_exposure, covariates, subgroups, defs, model, url, use_llm,
+                     workdir=None, doc=None, summary=None):
+    workdir=os.path.abspath(workdir or os.path.dirname(os.path.abspath(__file__)))
     d=fc.apply_definitions(DF,defs); amin=defs["pop"]["age_min"]
     n_total=len(d); d_age=d[d.age>=amin]; n_age=len(d_age)
-    # Continuous -> z-standardized term
+    # continuous -> z-standardized terms
     def term(v):
         if fc.typ(v)=="c":
             col=f"z_{v}"; d[col]=(d[v]-d[v].mean())/d[v].std(); return col
         return v
-    d["age50"]=(d.age>=50).astype(int)  # binary age for subgroups
+    d["age50"]=(d.age>=50).astype(int)  # age dichotomized for subgroups
     ex_t=term(main_exposure); cov_t=[term(c) for c in covariates]
     labels={ex_t:fc.lab(main_exposure),**{term(c):fc.lab(c) for c in covariates}}
-    # Binary exposure for causal analysis (continuous -> dichotomize at weighted median), continuous term for RCS
+    # binary exposure for causal analysis (a continuous exposure is split at its weighted median);
+    # continuous term for RCS
     def wmedian(x,w):
         s=pd.DataFrame({"x":x,"w":w}).dropna().sort_values("x"); c=s.w.cumsum()
         return s.x[c>=s.w.sum()/2].iloc[0]
@@ -62,9 +66,10 @@ def build_epi_report(dataset, DF, outcome, main_exposure, covariates, subgroups,
     json.dump({"outcome":outcome,"exposure":ex_t,"cov":cov_t,"subgroups":subgroups,
                "exposure_bin":exposure_bin,"exposure_cont":exposure_cont},
               open(os.path.join(workdir,"epi_config.json"),"w"),ensure_ascii=False)
-    r=subprocess.run([fc.rscript_cmd(),"epi.R"],cwd=workdir,capture_output=True,text=True,env=fc.r_env(workdir))
+    RS=fc._rscript()
+    r=subprocess.run([RS,"epi.R"],cwd=workdir,capture_output=True,text=True,errors="replace")
     if r.returncode!=0: raise RuntimeError(r.stderr)
-    ra=subprocess.run([fc.rscript_cmd(),"epi_adv.R"],cwd=workdir,capture_output=True,text=True,env=fc.r_env(workdir))
+    ra=subprocess.run([RS,"epi_adv.R"],cwd=workdir,capture_output=True,text=True,errors="replace")
     if ra.returncode!=0: raise RuntimeError("epi_adv: "+ra.stderr)
     vif=pd.read_csv(os.path.join(workdir,"epi_vif.csv")); rcs=pd.read_csv(os.path.join(workdir,"epi_rcs.csv"))
     love=pd.read_csv(os.path.join(workdir,"epi_love.csv")); tab6=pd.read_csv(os.path.join(workdir,"epi_table6.csv"))
@@ -78,20 +83,55 @@ def build_epi_report(dataset, DF, outcome, main_exposure, covariates, subgroups,
            f"(95% CI {me.lo:.2f}-{me.hi:.2f}). E-value {evp} (CI {evc}). Weighted risk {risk.weighted_risk_pct[0]:.1f}%.")
     interp=""
     if use_llm:
-        try: interp=fc.ollama_chat(f"{fc.STYLE}\nWrite the epidemiology results below as a Results paragraph. Do not change any numbers.\n{facts}",model,url).strip()
+        try: interp=fc.ollama_chat(f"{fc.STYLE}\nWrite the Results paragraph of a research paper in English from the epidemiologic results below. Do not change any numbers.\n{facts}",model,url).strip()
         except Exception: interp=""
     if not interp:
         interp=(f"In survey-weighted logistic regression, {fc.lab(main_exposure)} showed an adjusted odds ratio of "
                 f"{me.OR:.2f} (95% CI {me.lo:.2f} to {me.hi:.2f}) for {fc.lab(outcome)}. The E-value was {evp}, "
                 f"indicating the minimum strength of unmeasured confounding on the odds-ratio scale that could explain the estimate.")
-    # -- docx --
+    # ── Abstract (paper-style, written from the computed numbers) ──
+    per=" per 1-SD increment" if fc.typ(main_exposure)=="c" else ""
+    src={"KNHANES":"Korea National Health and Nutrition Examination Survey",
+         "NHANES":"National Health and Nutrition Examination Survey"}.get(dataset,dataset)
+    ab_facts=(f"Association between {fc.lab(main_exposure)} and {fc.lab(outcome)} in {src}. Survey-weighted "
+              f"cross-sectional analysis of {n_ana} adults aged {amin} years or older. Weighted prevalence of "
+              f"{fc.lab(outcome)} {risk.weighted_risk_pct[0]:.1f} percent. Fully adjusted odds ratio for "
+              f"{fc.lab(main_exposure)}{per} {me.OR:.2f} (95% CI {me.lo:.2f} to {me.hi:.2f}). E-value {evp} "
+              f"(confidence-interval limit {evc}). Robustness confirmed with inverse-probability weighting, "
+              f"propensity-score matching, augmented inverse-probability weighting, G-computation and targeted "
+              f"maximum likelihood estimation.")
+    abstract=""
+    if use_llm:
+        try: abstract=fc.ollama_chat(f"{fc.STYLE}\nWrite a single-paragraph structured abstract of a research paper "
+                                     f"in English with background, methods, results and conclusion, using only these "
+                                     f"facts. Do not invent or change any numbers.\n{ab_facts}",model,url).strip()
+        except Exception: abstract=""
+    if not abstract:
+        abstract=(f"Background. We examined the association between {fc.lab(main_exposure)} and {fc.lab(outcome)}. "
+                  f"Methods. We analyzed {n_ana} adults aged {amin} years or older in {src} using complex-survey "
+                  f"methods, with survey-weighted logistic regression and complementary confounding-control approaches "
+                  f"including inverse-probability weighting, propensity-score matching, augmented inverse-probability "
+                  f"weighting, G-computation and targeted maximum likelihood estimation. Results. The weighted "
+                  f"prevalence of {fc.lab(outcome)} was {risk.weighted_risk_pct[0]:.1f} percent. The fully adjusted "
+                  f"odds ratio for {fc.lab(main_exposure)}{per} was {me.OR:.2f} (95% CI {me.lo:.2f} to {me.hi:.2f}), "
+                  f"with an E-value of {evp}. Conclusion. {fc.lab(main_exposure)} was associated with {fc.lab(outcome)} "
+                  f"in this survey-weighted cross-sectional analysis, a hypothesis-generating finding that requires "
+                  f"prospective confirmation.")
+    if summary is not None:
+        summary['epi']={'exposure':main_exposure,'outcome':outcome,'or':float(me.OR),'lo':float(me.lo),
+                        'hi':float(me.hi),'evalue':float(evp),'evalue_ci':float(evc),
+                        'prev':float(risk.weighted_risk_pct[0]),'n':int(n_ana),'per':per,'interp':interp}
+    # ── docx ──
     from docx import Document
     from docx.shared import Inches
-    doc=Document(); doc.add_heading("Epidemiology Analysis Report",0)
-    doc.add_paragraph(f"{fc.lab(outcome)} - {dataset} - survey-weighted logistic")
+    own = doc is None
+    if own: doc=Document()
+    doc.add_heading("Epidemiologic Analysis Report", 0 if own else 1)
+    doc.add_paragraph(f"Outcome: {fc.lab(outcome)} · {dataset} · survey-weighted logistic regression")
     doc.add_paragraph(f"[LOGISTIC] outcome = {outcome}")
-    doc.add_heading("Figure 1. Participant selection flow",1)
-    doc.add_paragraph(f"Total {n_total:,} -> age >= {amin} years {n_age:,} -> complete design and outcome data {n_ana:,} (analytic sample).")
+    if own: doc.add_heading("Abstract",1); doc.add_paragraph(abstract)
+    doc.add_heading("Figure 1. Study population selection flow",1)
+    doc.add_paragraph(f"Total {n_total:,} → age ≥{amin} years {n_age:,} → complete design and outcome data {n_ana:,} (analytic sample).")
     def add_tab(title, df, note=""):
         doc.add_heading(title,1)
         if note: doc.add_paragraph(note)
@@ -111,28 +151,28 @@ def build_epi_report(dataset, DF, outcome, main_exposure, covariates, subgroups,
     SUBLAB={"men":"Sex","age50":"Age group"}
     def lvlab(s,lv):
         if s=="men": return "Men" if lv==1 else "Women"
-        if s=="age50": return ">=50" if lv==1 else "<50"
+        if s=="age50": return "≥50" if lv==1 else "<50"
         return str(lv)
     sg=sub.copy(); sg["OR (95% CI)"]=sg.apply(lambda x:f"{x.OR:.2f} ({x.lo:.2f}-{x.hi:.2f})" if pd.notna(x.OR) else "-",axis=1)
     sg["Subgroup"]=sg.subgroup.map(lambda s:SUBLAB.get(s, fc.lab(s) if s in fc.VARS else s))
     sg["Level"]=sg.apply(lambda r:lvlab(r.subgroup,r.level),axis=1)
     sg["P-interaction"]=sg.p_int.map(lambda p:"" if pd.isna(p) else ("<0.001" if p<0.001 else f"{p:.3f}"))
-    add_tab(f"Table 5. Subgroup analysis -- {fc.lab(main_exposure)} effect + P for interaction",
+    add_tab(f"Table 5. Subgroup analysis — {fc.lab(main_exposure)} effect with P for interaction",
             sg[["Subgroup","Level","OR (95% CI)","P-interaction"]])
     doc.add_heading("Adjusted OR forest",1)
     bio=io.BytesIO(); fig.savefig(bio,format="png",dpi=110,bbox_inches="tight"); bio.seek(0)
     import matplotlib.pyplot as plt; plt.close(fig)
     doc.add_picture(bio,width=Inches(5.5))
     doc.add_heading("E-value",1)
-    doc.add_paragraph(f"E-value for main exposure {fc.lab(main_exposure)} adjusted OR {me.OR:.2f} = {evp} (confidence-interval limit {evc}).")
+    doc.add_paragraph(f"E-value for the main exposure {fc.lab(main_exposure)} (adjusted OR {me.OR:.2f}) = {evp} (confidence-interval limit {evc}).")
     doc.add_heading("Interpretation",1); doc.add_paragraph(interp)
-    # -- Table 6: exposure effect summary (Crude, Min-adj, Full-adj, IPTW, G-comp, AIPW) --
-    doc.add_heading(f"Table 6. Main exposure effect summary -- {xbin_label}",1)
+    # ── Table 6: exposure effect summary (crude, minimally adjusted, fully adjusted, IPTW, G-comp, AIPW) ──
+    doc.add_heading(f"Table 6. Main exposure effect summary — {xbin_label}",1)
     t6=tab6.copy(); t6["Estimate (95% CI)"]=t6.apply(
         lambda x:f"{x.estimate:.2f} ({x.lo:.2f}-{x.hi:.2f})" if pd.notna(x.lo) else f"{x.estimate:.3f}",axis=1)
     add_tab("", t6[["method","scale","Estimate (95% CI)"]].rename(columns={"method":"Method","scale":"Scale"}))
-    # -- Love plot (|SMD| before/after IPTW) --
-    doc.add_heading("Love plot -- covariate balance (|SMD| before/after IPTW)",1)
+    # ── Love plot (SMD before and after IPTW) ──
+    doc.add_heading("Love plot — covariate balance (|SMD| before/after IPTW)",1)
     import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
     lv=love.dropna(); figl,axl=plt.subplots(figsize=(6,0.4*len(lv)+1)); yy=np.arange(len(lv))
     axl.scatter(lv.before,yy,label="before",color="#A32D2D"); axl.scatter(lv.after,yy,label="after (IPTW)",color="#0F6E56")
@@ -140,14 +180,78 @@ def build_epi_report(dataset, DF, outcome, main_exposure, covariates, subgroups,
     axl.set_xlabel("|SMD|"); axl.legend(fontsize=8); axl.invert_yaxis(); figl.tight_layout()
     bl=io.BytesIO(); figl.savefig(bl,format="png",dpi=110,bbox_inches="tight"); bl.seek(0); plt.close(figl)
     doc.add_picture(bl,width=Inches(5.5))
-    # -- VIF --
+    # ── VIF ──
     doc.add_heading("VIF (multicollinearity)",1)
     vt=vif.copy(); vt["Variable"]=vt.term.map(lambda t:labels.get(t,t)); vt["VIF"]=vt.VIF
     add_tab("", vt[["Variable","VIF"]])
-    # -- RCS nonlinearity --
+    # ── RCS non-linearity ──
     pnl=rcs.value.iloc[0]
     doc.add_heading("Restricted cubic spline nonlinearity test",1)
-    doc.add_paragraph("Not applied to continuous exposure (binary exposure)." if pd.isna(pnl) else
+    doc.add_paragraph("Not applicable (binary exposure)." if pd.isna(pnl) else
         f"RCS (3 knots) nonlinearity P = {'<0.001' if pnl<0.001 else f'{pnl:.3f}'} "
-        f"({'nonlinearity significant' if pnl<0.05 else 'cannot reject linearity'}).")
+        f"({'nonlinearity significant' if pnl<0.05 else 'linearity not rejected'}).")
+    if not own: return doc
+    buf=io.BytesIO(); doc.save(buf); return buf.getvalue()
+
+# ── Survival report (design-weighted Cox svycoxph + KM + incidence rates) ──
+def build_survival_report(dataset, DF, time_col, event_col, main_exposure, covariates, defs, label,
+                          model, url, use_llm, before_fu_years=None, workdir=None):
+    """label e.g. 'survival death', 'survival MACE'. With before_fu_years, events before that
+    follow-up time are excluded (early-death handling)."""
+    workdir=os.path.abspath(workdir or os.path.dirname(os.path.abspath(__file__)))
+    d=fc.apply_definitions(DF,defs); amin=defs["pop"]["age_min"]
+    if time_col not in d.columns or event_col not in d.columns:
+        raise RuntimeError(f"Follow-up/event variables ({time_col},{event_col}) not found. Please specify cohort variables.")
+    def term(v):
+        if fc.typ(v)=="c": d[f"z_{v}"]=(d[v]-d[v].mean())/d[v].std(); return f"z_{v}"
+        return v
+    ex_t=term(main_exposure); cov_t=[term(c) for c in covariates]
+    labels={ex_t:fc.lab(main_exposure),**{term(c):fc.lab(c) for c in covariates}}
+    def wmedian(x,w):
+        s=pd.DataFrame({"x":x,"w":w}).dropna().sort_values("x"); c=s.w.cumsum(); return s.x[c>=s.w.sum()/2].iloc[0]
+    if fc.typ(main_exposure)=="c":
+        d["xbin"]=(d[main_exposure]>wmedian(d[main_exposure],d["wt_pool"])).astype("Int64"); exposure_bin="xbin"; xbl=f"{fc.lab(main_exposure)} high"
+    else: exposure_bin=main_exposure; xbl=fc.lab(main_exposure)
+    d["ftime"]=pd.to_numeric(d[time_col],errors="coerce"); d["fevent"]=pd.to_numeric(d[event_col],errors="coerce")
+    ana=d[(d.age>=amin)&(d.wt_pool>0)&d.wt_pool.notna()&d.kstrata.notna()&d.psu.notna()&d.ftime.notna()&d.fevent.notna()&(d.ftime>0)].copy()
+    note=""
+    if before_fu_years is not None:  # early deaths: sensitivity analysis excluding events before the landmark (short follow-up)
+        n0=len(ana); ana=ana[~((ana.fevent==1)&(ana.ftime<before_fu_years))]; note=f"Excluded {n0-len(ana)} events occurring before {before_fu_years} years of follow-up (pre-follow-up handling)."
+    need=list(dict.fromkeys(["ftime","fevent",ex_t,exposure_bin]+cov_t+["age","kstrata","psu","wt_pool"]))
+    ana[[c for c in need if c in ana.columns]].to_csv(f"{workdir}/surv_analytic.csv",index=False)
+    import json,subprocess,io
+    json.dump({"time":"ftime","event":"fevent","exposure":ex_t,"exposure_bin":exposure_bin,"cov":cov_t},open(f"{workdir}/surv_config.json","w"),ensure_ascii=False)
+    r=subprocess.run([fc._rscript(),"epi_surv.R"],cwd=workdir,capture_output=True,text=True,errors="replace")
+    if r.returncode!=0: raise RuntimeError("epi_surv: "+r.stderr)
+    crude=pd.read_csv(f"{workdir}/surv_crude.csv"); adj=pd.read_csv(f"{workdir}/surv_adj.csv")
+    km=pd.read_csv(f"{workdir}/surv_km.csv"); inc=pd.read_csv(f"{workdir}/surv_inc.csv")
+    import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
+    figk,axk=plt.subplots(figsize=(6,4))
+    for g,sub in km.groupby("group"):
+        axk.step(sub.time,sub.surv,where="post",label=f"{main_exposure}={g}")
+    axk.set_xlabel("Time"); axk.set_ylabel("Survival probability"); axk.set_ylim(0,1); axk.legend(fontsize=8); axk.set_title(f"KM — {label}"); figk.tight_layout()
+    me=adj[adj.term==ex_t]; hrtxt = f"{me.HR.iloc[0]:.2f} ({me.lo.iloc[0]:.2f}-{me.hi.iloc[0]:.2f})" if len(me) else "-"
+    facts=f"{label}: adjusted hazard ratio for {fc.lab(main_exposure)} {hrtxt}. Incidence {inc.rate_per_1000py.iloc[0]}/1000 person-years."
+    interp=""
+    if use_llm:
+        try: interp=fc.ollama_chat(f"{fc.STYLE}\nWrite the survival-analysis results as English paper sentences. Do not change any numbers.\n{facts}",model,url).strip()
+        except Exception: interp=""
+    if not interp: interp=f"In survey-weighted Cox regression, {fc.lab(main_exposure)} was associated with {label} with an adjusted hazard ratio of {hrtxt}."
+    from docx import Document; from docx.shared import Inches
+    doc=Document(); doc.add_heading(f"Survival Analysis Report — {label}",0)
+    doc.add_paragraph(f"{dataset} · survey-weighted Cox regression (svycoxph) · outcome = {label}")
+    if note: doc.add_paragraph(note)
+    def tab(title,df):
+        doc.add_heading(title,1); cols=list(df.columns); tb=doc.add_table(rows=1,cols=len(cols)); tb.style="Light Grid Accent 1"
+        for j,c in enumerate(cols): tb.rows[0].cells[j].text=str(c)
+        for _,rw in df.iterrows():
+            cc=tb.add_row().cells
+            for j,c in enumerate(cols): cc[j].text=str(rw[c])
+    doc.add_heading("Incidence (survey-weighted)",1); doc.add_paragraph(f"Events {int(inc.events.iloc[0]):,}, person-time {int(inc.person_time.iloc[0]):,}, incidence rate {inc.rate_per_1000py.iloc[0]} per 1000 person-years")
+    doc.add_heading("Kaplan-Meier survival curves",1); b=io.BytesIO(); figk.savefig(b,format="png",dpi=110,bbox_inches="tight"); b.seek(0); plt.close(figk); doc.add_picture(b,width=Inches(5.5))
+    cr=crude.copy(); cr["Variable"]=cr.term.map(lambda t:labels.get(t,t)); cr["HR (95% CI)"]=cr.apply(lambda x:f"{x.HR:.2f} ({x.lo:.2f}-{x.hi:.2f})",axis=1)
+    tab("Crude HR (Cox)", cr[["Variable","HR (95% CI)","p"]])
+    aj=adj.copy(); aj["Variable"]=aj.term.map(lambda t:labels.get(t,t)); aj["HR (95% CI)"]=aj.apply(lambda x:f"{x.HR:.2f} ({x.lo:.2f}-{x.hi:.2f})",axis=1)
+    tab("Adjusted HR (Cox)", aj[["Variable","HR (95% CI)","p"]])
+    doc.add_heading("Interpretation",1); doc.add_paragraph(interp)
     buf=io.BytesIO(); doc.save(buf); return buf.getvalue()

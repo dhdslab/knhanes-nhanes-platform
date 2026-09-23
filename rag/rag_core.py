@@ -10,7 +10,7 @@ Design (mirrors the manuscript, but runs with zero setup):
       - ``tfidf``  (default) -- scikit-learn TF-IDF, no external service, instant.
       - ``ollama`` (optional) -- bge-m3 embeddings served locally through Ollama.
   * Answer backend:
-      - Ollama (e.g. llama3.2 / llama-3.3) if reachable -> a written answer, numbers copied
+      - Ollama (llama3.3:70b by default) if reachable -> a written answer, numbers copied
         verbatim from the retrieved reports and every claim cited.
       - otherwise -> an *extractive* answer: the top reports with their exact result
         sentences and file paths (numbers are never invented).
@@ -53,7 +53,7 @@ def ollama_embed(texts, model="bge-m3", url=None):
     a /= (np.linalg.norm(a, axis=1, keepdims=True) + 1e-9)
     return a
 
-def ollama_generate(prompt, model="llama3.2", url=None):
+def ollama_generate(prompt, model="llama3.3:70b", url=None):
     import requests
     r = requests.post(_ollama_url(url) + "/api/generate",
                       json={"model": model, "prompt": prompt, "stream": False}, timeout=600)
@@ -195,7 +195,7 @@ def _extractive(query, hits):
     lines.append("(No language model was used; the excerpts above are quoted verbatim from the reports.)")
     return "\n".join(lines)
 
-def answer(query, index=None, k=6, use_llm="auto", llm_model="llama3.2", survey=None, rtype=None):
+def answer(query, index=None, k=6, use_llm="auto", llm_model="llama3.3:70b", survey=None, rtype=None):
     ix = index or Index()
     hits = ix.search(query, k=k, survey=survey, rtype=rtype)
     if not hits:
