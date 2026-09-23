@@ -1,10 +1,9 @@
 # KNHANES + NHANES Evidence Reports — searchable with RAG
 
-> The complete corpus of machine-generated, audited analysis reports for the study
-> *"Map once, answer thousands: an audited AI infrastructure for national health evidence,"*
-> together with a small **retrieval-augmented search tool** so that **anyone — not only a
-> statistician — can ask a plain-language question and get the exact answer with a link to the
-> source report.**
+> A small **retrieval-augmented search tool** over the released corpus of the study
+> *"Medical evidence at machine scale: an auditable architecture for reusable health data,"*
+> so that **anyone, not only a statistician, can ask a plain-language question and get the
+> exact answer with a link to the source report.**
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![Search](https://img.shields.io/badge/search-TF--IDF%20or%20Ollama%20bge--m3-4B8BBE)
@@ -12,7 +11,7 @@
 
 ---
 
-## What is in this repository
+## What it searches
 
 ```
 suppl/
@@ -25,12 +24,13 @@ suppl/
   _manifest_association_KNHANES.csv   # every pair: estimate, 95% CI, p, FDR q, N, adjustment set
   _manifest_association_NHANES.csv
   _SUMMARY.txt
-rag/                # the search tool (this README's "How to use")
+rag/                # this search tool
 ```
 
-Every report is self-contained (structured abstract, methods, the adjusted estimate with 95% CI
-and FDR q, and a survey-weighted descriptive table). All statistics were computed deterministically
-in R `survey` and scikit-learn; the language model only wrote prose and **never produced a number.**
+Every report is self-contained: a structured abstract, methods, the adjusted estimate with 95% CI
+and FDR q, and a survey-weighted descriptive table. All statistics were computed deterministically
+in R `survey` and scikit-learn, and **no number was produced by a language model.** The prose of
+the released reports is the platform's deterministic template text.
 
 ## How to use (no expertise required)
 
@@ -47,8 +47,10 @@ python rag/build_index.py
 ```
 This reads every report in `suppl/` and builds a local search index. By default it uses TF-IDF,
 which needs **no external service**. For better semantic search, install
-[Ollama](https://ollama.com) (`ollama pull bge-m3 && ollama pull llama3.2`) and run
-`python rag/build_index.py --backend ollama`.
+[Ollama](https://ollama.com) (`ollama pull bge-m3 && ollama pull llama3.3:70b`) and run
+`python rag/build_index.py --backend ollama`. The answer model defaults to `llama3.3:70b`, the
+model of the manuscript; on a machine without a large GPU pass a smaller one with `--model` or
+`LOCAL_LLM_MODEL` (for example `llama3.2`).
 
 ### 3a. Ask questions in a web page (easiest)
 ```bash
@@ -92,6 +94,7 @@ python rag/ask.py "which model predicts metabolic syndrome best?" --type ml
 
 ## Related
 
-- Platform code (harmonization, survey engine, agents, report generator): **dhdslab/knhanes-nhanes-platform**
-- Raw KNHANES/NHANES microdata is **not** included here and must be obtained from the KDCA and the
+- The platform code (harmonization, survey engine, agents, report generator) is in the root of
+  this repository; see the [main README](../README.md).
+- Raw KNHANES/NHANES microdata are **not** included and must be obtained from the KDCA and the
   US NCHS respectively.
