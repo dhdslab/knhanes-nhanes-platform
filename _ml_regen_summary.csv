@@ -1,0 +1,55 @@
+﻿survey,outcome,label,best,auROC,auPRC,n,prev,n_feats,secs
+KNHANES,dm,Diabetes mellitus,XGBoost,0.8421,0.4799,6000,14.433333333333334,44,27.1
+KNHANES,prediabetes,Prediabetes,XGBoost,0.6942,0.498,6000,32.85,45,35.0
+KNHANES,htn,Hypertension,LogisticRegression,0.8251,0.6616,6000,32.483333333333334,49,14.7
+KNHANES,obesity,"Obesity (KSSO >=25 / WHO >=30, country-specific)",XGBoost,0.8095,0.6877,6000,34.08333333333333,43,7.6
+KNHANES,overweight,"Overweight (KSSO >=23 / WHO >=25, country-specific)",XGBoost,0.7987,0.8488,6000,57.66666666666666,43,6.6
+KNHANES,abdominal_obesity,Abdominal obesity,XGBoost,0.9191,0.849,6000,32.18333333333334,43,13.7
+KNHANES,central_obesity,Central obesity (WHtR>=0.5),LogisticRegression,0.9248,0.9325,6000,54.0,43,8.1
+KNHANES,high_bodyfat,High body fat (M>=25/F>=35%),XGBoost,0.8123,0.6917,6000,34.25,45,7.2
+KNHANES,sarcopenia,"Low muscle mass (low ASMI, AWGS cut)",XGBoost,0.876,0.5173,6000,12.15,43,10.2
+KNHANES,mets,Metabolic syndrome,XGBoost,0.8789,0.7369,6000,28.26666666666667,32,5.8
+KNHANES,dyslipidemia,Dyslipidemia (KSoLA composite),LogisticRegression,0.7378,0.7241,6000,51.6,41,7.7
+KNHANES,low_hdl,Low HDL cholesterol,XGBoost,0.7725,0.6401,6000,33.93333333333333,43,7.3
+KNHANES,high_tg,Hypertriglyceridemia (NCEP TG>=150),HistGradientBoosting,0.8948,0.7991,6000,27.883333333333333,48,9.6
+KNHANES,high_ldl,High LDL cholesterol (>=160),XGBoost,0.7169,0.2288,6000,10.3,45,6.6
+KNHANES,high_nonhdl,High non-HDL cholesterol (>=190),LogisticRegression,0.8074,0.3247,6000,8.883333333333333,43,8.1
+KNHANES,atherogenic_dyslipidemia,Atherogenic dyslipidemia (high TG + low HDL),XGBoost,0.7536,0.3496,6000,15.45,44,7.1
+KNHANES,insulin_resistance,Insulin resistance (HOMA-IR>=2.5),LogisticRegression,0.8161,0.6791,6000,31.066666666666663,53,9.2
+KNHANES,ckd,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),XGBoost,0.8007,0.3337,6000,9.566666666666666,44,10.2
+KNHANES,high_alt,Elevated ALT (>40 IU/L),LogisticRegression,0.8162,0.3173,6000,8.433333333333334,45,8.1
+KNHANES,high_ast,Elevated AST (>40 IU/L),LogisticRegression,0.7917,0.1942,6000,4.733333333333333,45,8.6
+KNHANES,adv_fibrosis,Advanced liver fibrosis (FIB-4>2.67),LogisticRegression,0.8402,0.2315,6000,3.783333333333333,43,7.8
+KNHANES,steatosis,Hepatic steatosis,XGBoost,0.9031,0.7445,6000,23.166666666666664,19,5.4
+KNHANES,masld,MASLD,XGBoost,0.724,0.4199,6000,21.23333333333333,16,4.5
+KNHANES,anemia,Anemia (WHO),XGBoost,0.7978,0.3067,6000,9.9,49,8.1
+KNHANES,leukocytosis,Leukocytosis (WBC>11),LogisticRegression,0.8025,0.1878,6000,1.4500000000000002,53,8.8
+KNHANES,vitd_deficiency,Vitamin D deficiency (<20 ng/mL),XGBoost,0.6693,0.7836,6000,67.36666666666666,61,10.1
+KNHANES,osteoporosis,"Osteoporosis (T-score<=-2.5, age>=50)",LogisticRegression,0.8407,0.7431,6000,33.78333333333333,59,10.7
+NHANES,dm,Diabetes mellitus,XGBoost,0.8468,0.585,6000,17.833333333333336,56,26.0
+NHANES,prediabetes,Prediabetes,XGBoost,0.7248,0.5411,6000,33.93333333333333,56,29.0
+NHANES,htn,Hypertension,XGBoost,0.86,0.8039,6000,42.65,60,11.1
+NHANES,obesity,"Obesity (KSSO >=25 / WHO >=30, country-specific)",XGBoost,0.7912,0.6902,6000,38.13333333333333,47,7.6
+NHANES,overweight,"Overweight (KSSO >=23 / WHO >=25, country-specific)",XGBoost,0.8228,0.9135,6000,71.03333333333333,47,7.6
+NHANES,abdominal_obesity,Abdominal obesity,XGBoost,0.825,0.8652,6000,57.616666666666674,46,7.3
+NHANES,central_obesity,Central obesity (WHtR>=0.5),XGBoost,0.8853,0.9736,6000,83.73333333333333,46,14.7
+NHANES,high_bodyfat,High body fat (M>=25/F>=35%),XGBoost,0.8202,0.9089,6000,70.6,47,7.5
+NHANES,sarcopenia,"Low muscle mass (low ASMI, AWGS cut)",LogisticRegression,0.7572,0.1323,6000,3.583333333333333,47,7.5
+NHANES,mets,Metabolic syndrome,XGBoost,0.878,0.8272,6000,39.88333333333333,43,7.1
+NHANES,dyslipidemia,Dyslipidemia (KSoLA composite),XGBoost,0.7415,0.7707,6000,55.63333333333333,52,7.4
+NHANES,low_hdl,Low HDL cholesterol,XGBoost,0.7589,0.591,6000,29.76666666666667,54,8.0
+NHANES,high_tg,Hypertriglyceridemia (NCEP TG>=150),XGBoost,0.8189,0.6553,6000,24.96666666666667,55,12.7
+NHANES,high_ldl,High LDL cholesterol (>=160),XGBoost,0.7198,0.188,6000,9.533333333333331,56,7.7
+NHANES,high_nonhdl,High non-HDL cholesterol (>=190),XGBoost,0.7648,0.2962,6000,11.966666666666669,54,7.4
+NHANES,atherogenic_dyslipidemia,Atherogenic dyslipidemia (high TG + low HDL),XGBoost,0.7984,0.387,6000,13.066666666666665,55,8.5
+NHANES,insulin_resistance,Insulin resistance (HOMA-IR>=2.5),XGBoost,0.8434,0.8392,6000,49.85,56,7.9
+NHANES,ckd,Chronic kidney disease (KDIGO: eGFR<60 or ACR>=30),XGBoost,0.8074,0.5422,6000,16.75,57,10.2
+NHANES,high_alt,Elevated ALT (>40 IU/L),XGBoost,0.8605,0.4626,6000,9.05,57,7.4
+NHANES,high_ast,Elevated AST (>40 IU/L),XGBoost,0.8647,0.3088,6000,5.866666666666666,57,7.2
+NHANES,adv_fibrosis,Advanced liver fibrosis (FIB-4>2.67),XGBoost,0.88,0.3507,6000,4.216666666666667,55,7.8
+NHANES,steatosis,Hepatic steatosis,LogisticRegression,0.8318,0.8685,4869,59.6426370918053,31,6.1
+NHANES,masld,MASLD,XGBoost,0.8069,0.8172,4575,55.40983606557377,27,4.6
+NHANES,anemia,Anemia (WHO),XGBoost,0.8061,0.3638,6000,10.65,60,12.7
+NHANES,leukocytosis,Leukocytosis (WBC>11),LogisticRegression,0.8075,0.2706,6000,5.2,62,10.2
+NHANES,vitd_deficiency,Vitamin D deficiency (<20 ng/mL),LogisticRegression,0.6718,0.4632,6000,31.03333333333333,62,10.5
+NHANES,osteoporosis,"Osteoporosis (T-score<=-2.5, age>=50)",LogisticRegression,0.824,0.3346,6000,9.0,54,9.6
